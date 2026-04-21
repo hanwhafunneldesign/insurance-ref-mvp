@@ -201,6 +201,15 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
           <span class="ai-panel-title">🔍 AI 다크패턴 검수</span>
           <button id="ai-btn" class="btn-primary btn-sm" onclick="ai.inspect()">검사 시작</button>
         </div>
+        <div id="ai-quota-bar" style="display:none;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:10px;color:rgba(255,255,255,.4);">오늘 분석 현황</span>
+            <span id="ai-quota-text" style="font-size:10px;font-weight:700;color:rgba(255,255,255,.6);"></span>
+          </div>
+          <div style="height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;">
+            <div id="ai-quota-fill" style="height:100%;border-radius:2px;transition:width .3s;"></div>
+          </div>
+        </div>
         <div class="ai-result" id="ai-result">
           <div class="ai-level" id="ai-lvl"></div>
           <div class="ai-desc" id="ai-dsc"></div>
@@ -452,7 +461,7 @@ const filter = {
 
 // ── 라이트박스 ───────────────────────────────────────────────
 const lightbox = {
-  open(idx)  { state.curIdx=idx; this._render(); document.getElementById('screen-modal').classList.add('open'); },
+  open(idx)  { state.curIdx=idx; this._render(); document.getElementById('screen-modal').classList.add('open'); QUOTA.updateUI(); },
   close()    { document.getElementById('screen-modal').classList.remove('open'); ai.reset(); },
   navigate(d){ const n=state.curIdx+d; if(n<0||n>=state.filtered.length)return; state.curIdx=n; this._render(); ai.reset(); },
   _render() {
@@ -657,11 +666,92 @@ const upload = {
   },
 };
 
+// ── AI 할당량 관리 ───────────────────────────────────────────
+const QUOTA = {
+  DAILY_LIMIT: 45, // 하루 최대 분석 횟수 (무료 50회에서 여유분 제외)
+  KEY: 'ai_quota',
+
+  // 오늘 날짜 키 (YYYY-MM-DD)
+  _todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  },
+
+  // 오늘 사용량 가져오기
+  get() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return { date: this._todayKey(), count: 0 };
+      const data = JSON.parse(raw);
+      // 날짜 바뀌면 리셋
+      if (data.date !== this._todayKey()) return { date: this._todayKey(), count: 0 };
+      return data;
+    } catch { return { date: this._todayKey(), count: 0 }; }
+  },
+
+  // 사용량 +1
+  increment() {
+    const data = this.get();
+    data.count += 1;
+    localStorage.setItem(this.KEY, JSON.stringify(data));
+    return data.count;
+  },
+
+  // 남은 횟수
+  remaining() {
+    return Math.max(0, this.DAILY_LIMIT - this.get().count);
+  },
+
+  // 한도 초과 여부
+  isExhausted() {
+    return this.get().count >= this.DAILY_LIMIT;
+  },
+
+  // UI 업데이트
+  updateUI() {
+    const used    = this.get().count;
+    const total   = this.DAILY_LIMIT;
+    const remain  = this.remaining();
+    const pct     = Math.min(100, Math.round((used / total) * 100));
+    const bar     = document.getElementById('ai-quota-bar');
+    const txt     = document.getElementById('ai-quota-text');
+    const fill    = document.getElementById('ai-quota-fill');
+    const btn     = document.getElementById('ai-btn');
+    if (!bar) return;
+
+    bar.style.display = 'block';
+
+    // 색상: 여유(초록) → 주의(노랑) → 위험(빨강)
+    const color = pct >= 90 ? '#FF4242' : pct >= 70 ? '#FFC107' : '#4CAF50';
+    fill.style.width  = pct + '%';
+    fill.style.background = color;
+
+    if (remain === 0) {
+      txt.textContent  = '오늘 할당량 소진';
+      txt.style.color  = '#FF4242';
+      btn.disabled     = true;
+      btn.textContent  = '오늘 소진됨';
+      btn.style.opacity = '0.5';
+    } else if (remain <= 5) {
+      txt.textContent = `${remain}회 남음 ⚠️`;
+      txt.style.color = '#FFC107';
+      btn.disabled    = false;
+      btn.style.opacity = '1';
+    } else {
+      txt.textContent = `${remain}회 남음`;
+      txt.style.color = 'rgba(255,255,255,.5)';
+      btn.disabled    = false;
+      btn.style.opacity = '1';
+    }
+  },
+};
+
 // ── AI ──────────────────────────────────────────────────────
 const ai = {
   reset() {
     document.getElementById('ai-result').style.display='none';
-    const b=document.getElementById('ai-btn'); b.disabled=false; b.textContent='검사 시작';
+    const b=document.getElementById('ai-btn');
+    b.textContent='검사 시작';
+    QUOTA.updateUI(); // 할당량 상태 반영
   },
   async inspect() {
     // curIdx가 null이거나 filtered가 비어있으면 중단
@@ -677,6 +767,12 @@ const ai = {
     }
     const btn=document.getElementById('ai-btn'),result=document.getElementById('ai-result'),
           lvl=document.getElementById('ai-lvl'),dsc=document.getElementById('ai-dsc');
+    // 할당량 체크
+    if (QUOTA.isExhausted()) {
+      QUOTA.updateUI();
+      return;
+    }
+
     btn.disabled=true; btn.innerHTML='<span class="loader"></span>분석 중...';
     result.style.display='block'; lvl.innerHTML=''; dsc.textContent='다크패턴을 찾고 있습니다...';
     dsc.style.color='';
@@ -729,6 +825,9 @@ const ai = {
         lvl.appendChild(pl);
       }
       dsc.textContent=p.reason||'위반사항 없음';
+      // 성공 시 사용량 카운트
+      QUOTA.increment();
+      QUOTA.updateUI();
     } catch(err){
       console.error('[AI] 검수 실패:', err);
       lvl.innerHTML='';
