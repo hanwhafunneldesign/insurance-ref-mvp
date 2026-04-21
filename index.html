@@ -614,7 +614,9 @@ const upload = {
       try {
         // 1) Storage 업로드
         const ext  = item.file.name.split('.').pop();
-        const path = `${Date.now()}_${item.parsed.co}_${item.parsed.screenId}.${ext}`;
+        // 파일 경로는 영문/숫자만 사용 (한글 포함 시 Storage 오류)
+        const safeCo = item.parsed.insCode || 'co';
+        const path = `${Date.now()}_${safeCo}_${item.parsed.screenId}.${ext}`;
         const {error:se} = await supa.storage.from(CONFIG.BUCKET).upload(path, item.file, {cacheControl:'3600',upsert:false});
         if (se) throw se;
         item.progress = 60; this._renderList();
