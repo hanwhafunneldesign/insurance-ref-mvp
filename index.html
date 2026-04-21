@@ -664,32 +664,92 @@ const ai = {
     const b=document.getElementById('ai-btn'); b.disabled=false; b.textContent='검사 시작';
   },
   async inspect() {
-    const s=state.filtered[state.curIdx]; if(!s) return;
+    // curIdx가 null이거나 filtered가 비어있으면 중단
+    if(state.curIdx === null || !state.filtered.length) {
+      console.warn('[AI] curIdx 없음 또는 filtered 비어있음');
+      return;
+    }
+    const s = state.filtered[state.curIdx];
+    if(!s || !s.imgSrc) {
+      document.getElementById('ai-dsc').textContent = '이미지를 찾을 수 없습니다.';
+      document.getElementById('ai-result').style.display = 'block';
+      return;
+    }
     const btn=document.getElementById('ai-btn'),result=document.getElementById('ai-result'),
           lvl=document.getElementById('ai-lvl'),dsc=document.getElementById('ai-dsc');
     btn.disabled=true; btn.innerHTML='<span class="loader"></span>분석 중...';
     result.style.display='block'; lvl.innerHTML=''; dsc.textContent='다크패턴을 찾고 있습니다...';
+    dsc.style.color='';
     try {
       const b64=await this._toB64(s.imgSrc);
-      const prompt=`보험 서비스 Product Designer 관점에서 이 UI 스크린샷에 다크패턴(기만적 디자인)이 있는지 검수해줘.\n결과는 반드시 아래 JSON 형식으로만 응답해. 마크다운 코드블록 없이.\n{"level":"High"|"Medium"|"Low"|"없음","patterns":["패턴명"],"reason":"한국어 2~3문장"}`;
-      const res=await fetch(CONFIG.PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${CONFIG.SUPA_KEY}`},body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],generationConfig:{temperature:0.2,maxOutputTokens:512}})});
-      if(!res.ok) throw new Error(`오류 ${res.status}`);
+      const prompt=`너는 금융감독위원회에서 금융 관련 서비스(보험업 포함)를 모니터링하는 업무를 담당하고 있어.
+
+금융위원회·금융감독원의 「온라인 금융상품 판매 관련 다크패턴 가이드라인(2025.12)」에 기반하여 아래 UI 스크린샷을 분석해줘.
+
+가이드라인의 4개 범주(오도형·방해형·압박형·편취유도형)와 15개 세부유형 기준으로 다크패턴 미준수 여부를 판별해.
+
+결과는 반드시 아래 JSON 형식으로만 응답해. 마크다운 코드블록이나 다른 텍스트 절대 포함하지 마.
+{
+  "level": "High" 또는 "Medium" 또는 "Low" 또는 "없음",
+  "patterns": ["위반 유형명 (예: 잘못된 계층구조, 특정옵션 사전선택 등)"],
+  "reason": "미준수 근거를 가이드라인 항목명 포함하여 80자 이내로 간략히"
+}`;
+      const res=await fetch(CONFIG.PROXY_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${CONFIG.SUPA_KEY}`},
+        body:JSON.stringify({
+          contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
+          generationConfig:{temperature:0.1,maxOutputTokens:512}
+        })
+      });
+      if(!res.ok) {
+        const errText = await res.text().catch(()=>'');
+        throw new Error(`API 오류 ${res.status}: ${errText.slice(0,100)}`);
+      }
       const data=await res.json();
-      const raw=data?.candidates?.[0]?.content?.parts?.[0]?.text; if(!raw) throw new Error('응답 없음');
-      const p=JSON.parse(raw.replace(/```(?:json)?/g,'').trim());
+      if(data.error) throw new Error(data.error.message || 'API 에러');
+      const raw=data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(!raw) throw new Error('응답이 비어있습니다');
+      const cleaned = raw.replace(/```(?:json)?/g,'').replace(/```/g,'').trim();
+      let p;
+      try { p=JSON.parse(cleaned); }
+      catch(e) { throw new Error('JSON 파싱 실패: ' + cleaned.slice(0,60)); }
       const li={'High':{c:'#FF4242',bg:'rgba(255,66,66,0.15)',e:'🔴'},'Medium':{c:'#FFC107',bg:'rgba(255,193,7,0.15)',e:'🟡'},'Low':{c:'#4CAF50',bg:'rgba(76,175,80,0.15)',e:'🟢'},'없음':{c:'#4CAF50',bg:'rgba(76,175,80,0.15)',e:'✅'}};
       const info=li[p.level]||li['Low'];
       lvl.innerHTML=`<span class="ai-level-badge" style="background:${info.bg};color:${info.c}">${info.e} ${esc(p.level||'-')}</span>`;
-      if(Array.isArray(p.patterns)&&p.patterns.length){const pl=document.createElement('div');pl.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin:4px 0';p.patterns.forEach(pt=>{const t=document.createElement('span');t.textContent=pt;t.style.cssText=`font-size:10px;padding:2px 7px;border-radius:4px;background:${info.bg};color:${info.c};font-weight:700`;pl.appendChild(t)});lvl.appendChild(pl)}
-      dsc.textContent=p.reason||'';
-    } catch(err){ lvl.textContent=''; dsc.textContent=`분석 실패: ${err.message}`; dsc.style.color='rgba(255,100,100,0.8)'; }
-    finally { btn.disabled=false; btn.textContent='다시 검사'; }
+      if(Array.isArray(p.patterns)&&p.patterns.length){
+        const pl=document.createElement('div');
+        pl.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin:6px 0';
+        p.patterns.forEach(pt=>{
+          const t=document.createElement('span');
+          t.textContent=pt;
+          t.style.cssText=`font-size:10px;padding:2px 7px;border-radius:4px;background:${info.bg};color:${info.c};font-weight:700`;
+          pl.appendChild(t);
+        });
+        lvl.appendChild(pl);
+      }
+      dsc.textContent=p.reason||'위반사항 없음';
+    } catch(err){
+      console.error('[AI] 검수 실패:', err);
+      lvl.innerHTML='';
+      dsc.textContent=`분석 실패: ${err.message}`;
+      dsc.style.color='rgba(255,100,100,0.8)';
+    } finally {
+      btn.disabled=false;
+      btn.textContent='다시 검사';
+    }
   },
   _toB64(url) {
     return new Promise((resolve,reject)=>{
-      fetch(url).then(r=>{ if(!r.ok) throw new Error(`이미지 오류 ${r.status}`); return r.blob(); })
-      .then(blob=>{ const rd=new FileReader(); rd.onload=()=>resolve(rd.result.split(',')[1]); rd.onerror=()=>reject(new Error('FileReader 오류')); rd.readAsDataURL(blob); })
-      .catch(reject);
+      fetch(url)
+        .then(r=>{ if(!r.ok) throw new Error(`이미지 로드 실패 (${r.status})`); return r.blob(); })
+        .then(blob=>{
+          const rd=new FileReader();
+          rd.onload=()=>resolve(rd.result.split(',')[1]);
+          rd.onerror=()=>reject(new Error('FileReader 오류'));
+          rd.readAsDataURL(blob);
+        })
+        .catch(reject);
     });
   },
 };
