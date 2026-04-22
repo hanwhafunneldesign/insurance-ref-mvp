@@ -131,6 +131,38 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--label-strong);color:#fff;padding:10px 20px;border-radius:var(--r-full);font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 관리자 체크박스 & 툴바 ─────────────────────────────── */
+.admin-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--primary)}
+.bulk-toolbar{display:none;align-items:center;gap:10px;padding:10px 16px;background:var(--primary-alt);border-bottom:1px solid var(--primary);flex-shrink:0}
+.bulk-toolbar.visible{display:flex}
+.bulk-count{font-size:13px;font-weight:700;color:var(--primary);flex-shrink:0}
+.bulk-field-group{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:wrap}
+.bulk-select{height:30px;padding:0 8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--surface);color:var(--label-normal);cursor:pointer;min-width:120px}
+.bulk-select:focus{outline:none;border-color:var(--primary)}
+.bulk-input{height:30px;padding:0 8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--surface);color:var(--label-normal);width:130px}
+.bulk-input:focus{outline:none;border-color:var(--primary)}
+.bulk-apply-btn{height:30px;padding:0 14px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}
+.bulk-apply-btn:hover{background:var(--primary-dark)}
+
+/* ── 관리자 셀렉트 인라인 ─────────────────────────────────── */
+.cell-select{height:28px;padding:0 6px;border:1px solid var(--primary);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--surface);color:var(--label-normal);cursor:pointer;min-width:100px}
+.cell-select:focus{outline:none}
+.cell-text-input{height:28px;padding:0 6px;border:1px solid var(--primary);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--surface);color:var(--label-normal);width:110px}
+.cell-text-input:focus{outline:none}
+
+/* ── 라이트박스 편집 모드 ─────────────────────────────────── */
+.lb-edit-btn{height:28px;padding:0 12px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;flex-shrink:0}
+.lb-edit-btn:hover{background:rgba(255,255,255,.2)}
+.lb-edit-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.lb-edit-btn.save{background:#22c55e;color:#fff;border-color:#22c55e}
+.lb-field-edit{display:flex;flex-direction:column;gap:3px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.lb-field-edit .lb-info-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.lb-field-input{width:100%;height:30px;padding:0 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--r-sm);color:#fff;font-size:13px;font-family:inherit}
+.lb-field-input:focus{outline:none;border-color:var(--primary)}
+.lb-field-select{width:100%;height:30px;padding:0 10px;background:rgba(30,30,40,.9);border:1px solid rgba(255,255,255,.15);border-radius:var(--r-sm);color:#fff;font-size:13px;font-family:inherit;cursor:pointer}
+.lb-field-select:focus{outline:none;border-color:var(--primary)}
+.lb-field-select option{background:#1a1a2e;color:#fff}
 </style>
 </head>
 <body>
@@ -169,7 +201,33 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 <div class="page" id="page-admin">
   <div class="admin-topbar">
     <div style="font-size:13px;font-weight:600;">전체 레퍼런스 관리</div>
-    <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" id="bulk-select-all-btn" onclick="admin.toggleSelectAll()" style="display:none">전체선택</button>
+      <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
+    </div>
+  </div>
+  <!-- 일괄 수정 툴바 -->
+  <div class="bulk-toolbar" id="bulk-toolbar">
+    <span class="bulk-count" id="bulk-count">0개 선택</span>
+    <div class="bulk-field-group">
+      <input class="bulk-input" id="bulk-co" placeholder="기업명 변경">
+      <select class="bulk-select" id="bulk-major" onchange="admin.onBulkMajorChange()">
+        <option value="">대분류 변경</option>
+      </select>
+      <select class="bulk-select" id="bulk-mid">
+        <option value="">중분류 변경</option>
+      </select>
+      <input class="bulk-input" id="bulk-minor" placeholder="소분류 (예: S01)" style="width:100px">
+      <select class="bulk-select" id="bulk-ins">
+        <option value="">보험유형 변경</option>
+        <option value="자동차보험">자동차보험</option>
+        <option value="건강보험">건강보험</option>
+        <option value="운전자보험">운전자보험</option>
+        <option value="기타보험">기타보험</option>
+      </select>
+    </div>
+    <button class="bulk-apply-btn" onclick="admin.applyBulk()">일괄 수정</button>
+    <button class="btn-ghost btn-sm" onclick="admin.clearSelection()">취소</button>
   </div>
   <div class="admin-body">
     <div id="admin-table-wrap"></div>
@@ -190,12 +248,53 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
   <div class="lb-body" onclick="event.stopPropagation()">
     <div class="lb-preview-wrap" id="sm-preview-wrap"></div>
     <div class="lb-panel">
-      <div class="lb-info-item"><span class="lb-info-lbl">기업명</span><span class="lb-info-val" id="sm-co">-</span></div>
-      <div class="lb-info-item"><span class="lb-info-lbl">화면 ID</span><span class="lb-info-val mono" id="sm-screen-id">-</span></div>
-      <div class="lb-info-item"><span class="lb-info-lbl">대분류</span><span class="lb-info-val" id="sm-major">-</span></div>
-      <div class="lb-info-item"><span class="lb-info-lbl">중분류</span><span class="lb-info-val" id="sm-mid">-</span></div>
-      <div class="lb-info-item"><span class="lb-info-lbl">소분류</span><span class="lb-info-val" id="sm-minor">-</span></div>
-      <div class="lb-info-item"><span class="lb-info-lbl">보험유형</span><span class="lb-info-val" id="sm-ins">-</span></div>
+      <!-- 편집 토글 버튼 -->
+      <div style="display:flex;justify-content:flex-end;padding:8px 0 4px;gap:6px">
+        <button class="lb-edit-btn" id="lb-edit-toggle" onclick="lbEdit.toggle()">✏️ 수정</button>
+        <button class="lb-edit-btn save" id="lb-edit-save" style="display:none" onclick="lbEdit.save()">저장</button>
+        <button class="lb-edit-btn" id="lb-edit-cancel" style="display:none" onclick="lbEdit.cancel()">취소</button>
+      </div>
+      <!-- 보기 모드 -->
+      <div id="lb-view-mode">
+        <div class="lb-info-item"><span class="lb-info-lbl">기업명</span><span class="lb-info-val" id="sm-co">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">화면 ID</span><span class="lb-info-val mono" id="sm-screen-id">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">대분류</span><span class="lb-info-val" id="sm-major">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">중분류</span><span class="lb-info-val" id="sm-mid">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">소분류</span><span class="lb-info-val" id="sm-minor">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">보험유형</span><span class="lb-info-val" id="sm-ins">-</span></div>
+      </div>
+      <!-- 편집 모드 -->
+      <div id="lb-edit-mode" style="display:none">
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">기업명</span>
+          <input class="lb-field-input" id="lb-edit-co" placeholder="기업명">
+        </div>
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">화면 ID</span>
+          <span class="lb-info-val mono" id="lb-edit-screen-id-display" style="padding:4px 0;font-size:12px;color:#7B93FF"></span>
+        </div>
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">대분류</span>
+          <select class="lb-field-select" id="lb-edit-major" onchange="lbEdit.onMajorChange()"></select>
+        </div>
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">중분류</span>
+          <select class="lb-field-select" id="lb-edit-mid"></select>
+        </div>
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">소분류</span>
+          <input class="lb-field-input" id="lb-edit-minor" placeholder="예: S01 (없으면 공란)">
+        </div>
+        <div class="lb-field-edit">
+          <span class="lb-info-lbl">보험유형</span>
+          <select class="lb-field-select" id="lb-edit-ins">
+            <option value="자동차보험">자동차보험</option>
+            <option value="건강보험">건강보험</option>
+            <option value="운전자보험">운전자보험</option>
+            <option value="기타보험">기타보험</option>
+          </select>
+        </div>
+      </div>
       <div class="ai-panel">
         <div class="ai-panel-header">
           <span class="ai-panel-title">🔍 AI 다크패턴 검수</span>
@@ -418,32 +517,83 @@ const render = {
     const wrap = document.getElementById('admin-table-wrap');
     if (!state.allScreens.length) {
       wrap.innerHTML = '<div class="empty-admin">등록된 데이터가 없습니다.</div>';
+      document.getElementById('bulk-select-all-btn').style.display='none';
       return;
     }
-    let html = `<table class="admin-table"><thead><tr>
+    document.getElementById('bulk-select-all-btn').style.display='';
+
+    // 선택 상태 초기화
+    admin._selected = new Set();
+    admin._updateBulkUI();
+
+    // 대분류 선택지 렌더
+    admin._renderBulkMajorOptions();
+
+    const frag = document.createDocumentFragment();
+    const table = document.createElement('table');
+    table.className = 'admin-table';
+    table.innerHTML = `<thead><tr>
+      <th style="width:36px"><input type="checkbox" class="admin-checkbox" id="chk-all" onchange="admin.onSelectAll(this)"></th>
       <th style="width:40px"></th>
-      <th>기업명</th><th>화면 ID</th><th>중분류</th>
+      <th>기업명</th><th>화면 ID</th><th>대분류</th><th>중분류</th>
       <th>소분류</th><th>보험유형</th>
-      <th>이미지 URL</th><th style="width:110px">액션</th>
-    </tr></thead><tbody>`;
+      <th style="width:90px">액션</th>
+    </tr></thead>`;
+    const tbody = document.createElement('tbody');
+
     state.allScreens.forEach(s => {
-      const minor = s.minorCode || '';
-      html += `<tr id="admin-row-${s.id}">
-        <td><img class="thumb-sm" src="${esc(s.imgSrc||'')}" alt="" onerror="this.style.display='none'"></td>
-        <td><span class="inline-val" onclick="admin.editCell(${s.id},'co',this)">${esc(s.co||'-')}</span></td>
-        <td><span class="id-badge">${esc(s.screenId||'-')}</span></td>
-        <td>${esc(s.midLabel||'-')}</td>
-        <td><span id="minor-val-${s.id}" class="inline-val${!minor?' parse-val empty':''}" onclick="admin.editMinor(${s.id})">${minor?esc(minor):'(미지정)'}</span></td>
-        <td><span class="ins-badge">${esc(s.insLabel||'-')}</span></td>
-        <td><a href="${esc(s.imgSrc||'')}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:none;word-break:break-all">${s.imgSrc?(s.imgSrc.length>40?s.imgSrc.slice(0,40)+'…':s.imgSrc):'-'}</a></td>
-        <td><div style="display:flex;gap:4px">
-          <button class="btn-ghost btn-sm" onclick="admin.editMinor(${s.id})">수정</button>
-          <button class="btn-danger btn-sm" onclick="admin.deleteScreen(${s.id})">삭제</button>
-        </div></td>
-      </tr>`;
+      const tr = document.createElement('tr');
+      tr.id = `admin-row-${s.id}`;
+
+      // 체크박스
+      const tdChk = document.createElement('td');
+      const chk = document.createElement('input');
+      chk.type='checkbox'; chk.className='admin-checkbox'; chk.dataset.id=s.id;
+      chk.onchange = () => admin.onRowCheck(s.id, chk.checked);
+      tdChk.appendChild(chk);
+
+      // 썸네일
+      const tdThumb = document.createElement('td');
+      const img = document.createElement('img');
+      img.className='thumb-sm'; img.src=s.imgSrc||''; img.alt='';
+      img.onerror=()=>img.style.display='none';
+      tdThumb.appendChild(img);
+
+      // 기업명 (텍스트 인라인 편집)
+      const tdCo = document.createElement('td');
+      tdCo.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editTextField(${s.id},'co',this)">${esc(s.co||'-')}</span>`;
+
+      // 화면ID (배지, 읽기전용)
+      const tdId = document.createElement('td');
+      tdId.innerHTML = `<span class="id-badge">${esc(s.screenId||'-')}</span>`;
+
+      // 대분류 (셀렉트)
+      const tdMajor = document.createElement('td');
+      tdMajor.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editSelectField(${s.id},'major',this,'${esc(s.majorCode||'')}')">${esc(s.majorLabel||'-')}</span>`;
+
+      // 중분류 (셀렉트, 대분류 종속)
+      const tdMid = document.createElement('td');
+      tdMid.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editSelectField(${s.id},'mid',this,'${esc(s.midCode||'')}')">${esc(s.midLabel||'-')}</span>`;
+
+      // 소분류 (텍스트 인라인)
+      const minor = s.minorCode||'';
+      const tdMinor = document.createElement('td');
+      tdMinor.innerHTML = `<span id="minor-val-${s.id}" class="inline-val${!minor?' parse-val empty':''}" title="클릭해서 수정" onclick="admin.editTextField(${s.id},'minorCode',this)">${minor?esc(minor):'(미지정)'}</span>`;
+
+      // 보험유형 (셀렉트)
+      const tdIns = document.createElement('td');
+      tdIns.innerHTML = `<span class="inline-val ins-badge" title="클릭해서 수정" onclick="admin.editInsField(${s.id},this)">${esc(s.insLabel||'-')}</span>`;
+
+      // 액션
+      const tdAct = document.createElement('td');
+      tdAct.innerHTML = `<button class="btn-danger btn-sm" onclick="admin.deleteScreen(${s.id})">삭제</button>`;
+
+      tr.append(tdChk, tdThumb, tdCo, tdId, tdMajor, tdMid, tdMinor, tdIns, tdAct);
+      tbody.appendChild(tr);
     });
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
+    table.appendChild(tbody);
+    wrap.innerHTML='';
+    wrap.appendChild(table);
   },
 };
 
@@ -462,8 +612,8 @@ const filter = {
 // ── 라이트박스 ───────────────────────────────────────────────
 const lightbox = {
   open(idx)  { state.curIdx=idx; this._render(); document.getElementById('screen-modal').classList.add('open'); QUOTA.updateUI(); },
-  close()    { document.getElementById('screen-modal').classList.remove('open'); ai.reset(); },
-  navigate(d){ const n=state.curIdx+d; if(n<0||n>=state.filtered.length)return; state.curIdx=n; this._render(); ai.reset(); },
+  close()    { document.getElementById('screen-modal').classList.remove('open'); ai.reset(); if(lbEdit._editing) lbEdit.cancel(); },
+  navigate(d){ if(lbEdit._editing) return; const n=state.curIdx+d; if(n<0||n>=state.filtered.length)return; state.curIdx=n; this._render(); ai.reset(); },
   _render() {
     const s=state.filtered[state.curIdx]; if(!s) return;
     document.getElementById('sm-title').textContent    = s.co||'';
@@ -485,50 +635,387 @@ const lightbox = {
 };
 document.addEventListener('keydown', e=>{
   if(!document.getElementById('screen-modal').classList.contains('open')) return;
+  if(e.key==='Escape') {
+    if(lbEdit._editing) { lbEdit.cancel(); return; }
+    lightbox.close();
+  }
+  if(lbEdit._editing) return; // 편집 중엔 화살표 네비 막기
   if(e.key==='ArrowLeft')  lightbox.navigate(-1);
   if(e.key==='ArrowRight') lightbox.navigate(1);
-  if(e.key==='Escape')     lightbox.close();
 });
+
+// ── 라이트박스 편집 ──────────────────────────────────────────
+const lbEdit = {
+  _editing: false,
+  _snapshot: null, // 편집 시작 전 원본 데이터 스냅샷
+
+  toggle() {
+    if (this._editing) { this.cancel(); return; }
+    this._editing = true;
+    const s = state.filtered[state.curIdx]; if(!s) return;
+    this._snapshot = {...s};
+
+    // 편집 UI 표시
+    document.getElementById('lb-view-mode').style.display='none';
+    document.getElementById('lb-edit-mode').style.display='block';
+    document.getElementById('lb-edit-toggle').style.display='none';
+    document.getElementById('lb-edit-save').style.display='';
+    document.getElementById('lb-edit-cancel').style.display='';
+
+    // 값 채우기
+    document.getElementById('lb-edit-co').value = s.co||'';
+    document.getElementById('lb-edit-screen-id-display').textContent = s.screenId||'-';
+    document.getElementById('lb-edit-minor').value = s.minorCode||'';
+
+    // 대분류 옵션
+    const majSel = document.getElementById('lb-edit-major');
+    majSel.innerHTML = '<option value="">선택</option>';
+    Object.entries(MAJOR_MAP).forEach(([code, label]) => {
+      const opt = document.createElement('option');
+      opt.value=code; opt.textContent=`${code} ${label}`;
+      if(code===s.majorCode) opt.selected=true;
+      majSel.appendChild(opt);
+    });
+
+    // 중분류 옵션 (현재 대분류 기준)
+    this._renderMidOptions(s.majorCode, s.midCode);
+
+    // 보험유형
+    document.getElementById('lb-edit-ins').value = s.insLabel||'자동차보험';
+  },
+
+  onMajorChange() {
+    const majorCode = document.getElementById('lb-edit-major').value;
+    this._renderMidOptions(majorCode, '');
+  },
+
+  _renderMidOptions(majorCode, selectedMidCode) {
+    const midSel = document.getElementById('lb-edit-mid');
+    midSel.innerHTML = '<option value="">선택</option>';
+    Object.entries(MID_MAP).forEach(([key, label]) => {
+      if (!majorCode || key.startsWith(majorCode)) {
+        const opt = document.createElement('option');
+        opt.value=key; opt.textContent=`${key} ${label}`;
+        if(key===selectedMidCode) opt.selected=true;
+        midSel.appendChild(opt);
+      }
+    });
+  },
+
+  async save() {
+    const s = state.filtered[state.curIdx]; if(!s) return;
+    const btn = document.getElementById('lb-edit-save');
+    btn.textContent='저장 중...'; btn.disabled=true;
+
+    const coVal    = document.getElementById('lb-edit-co').value.trim();
+    const majorCode= document.getElementById('lb-edit-major').value;
+    const midCode  = document.getElementById('lb-edit-mid').value;
+    const minorVal = document.getElementById('lb-edit-minor').value.trim().toUpperCase();
+    const insVal   = document.getElementById('lb-edit-ins').value;
+
+    const updates = {};
+    if (coVal !== s.co)           updates.co = coVal;
+    if (majorCode && majorCode !== s.majorCode) {
+      updates.majorcode = majorCode;
+      updates.majorlabel = MAJOR_MAP[majorCode]||majorCode;
+    }
+    if (midCode && midCode !== s.midCode) {
+      updates.midcode = midCode;
+      updates.midlabel = MID_MAP[midCode]||midCode;
+    }
+    if (minorVal !== (s.minorCode||'')) updates.minorcode = minorVal;
+    if (insVal !== s.insLabel) {
+      updates.inslabel = insVal;
+      updates.inscode  = INS_CODE_MAP[insVal]||'';
+    }
+
+    if (!Object.keys(updates).length) { this.cancel(); return; }
+
+    try {
+      const {error} = await supa.from('screens').update(updates).eq('id', s.id);
+      if(error) throw error;
+
+      // 로컬 상태 반영
+      if(updates.co)         { s.co = updates.co; }
+      if(updates.majorcode)  { s.majorCode = updates.majorcode; s.majorLabel = updates.majorlabel; }
+      if(updates.midcode)    { s.midCode = updates.midcode; s.midLabel = updates.midlabel; }
+      if('minorcode' in updates) s.minorCode = updates.minorcode;
+      if(updates.inslabel)   { s.insLabel = updates.inslabel; s.insCode = updates.inscode; }
+
+      ui.showToast('저장됐습니다.');
+      this._editing = false;
+      this._exitEditMode();
+      lightbox._render(); // 보기 모드 새로고침
+      render.sidebar(); render.gallery();
+    } catch(e) {
+      ui.showToast('저장 실패: ' + e.message, 4000);
+    } finally {
+      btn.textContent='저장'; btn.disabled=false;
+    }
+  },
+
+  cancel() {
+    this._editing = false;
+    this._exitEditMode();
+  },
+
+  _exitEditMode() {
+    document.getElementById('lb-view-mode').style.display='block';
+    document.getElementById('lb-edit-mode').style.display='none';
+    document.getElementById('lb-edit-toggle').style.display='';
+    document.getElementById('lb-edit-save').style.display='none';
+    document.getElementById('lb-edit-cancel').style.display='none';
+  },
+};
 
 // ── 관리자 ───────────────────────────────────────────────────
 const admin = {
-  editMinor(id) {
-    const span=document.getElementById(`minor-val-${id}`); if(!span) return;
-    const cur=span.textContent.trim()==='(미지정)'?'':span.textContent.trim();
-    const inp=document.createElement('input'); inp.type='text'; inp.className='edit-input';
-    inp.value=cur; inp.placeholder='예: S01'; inp.style.width='80px';
-    span.replaceWith(inp); inp.focus();
-    const save=async()=>{
-      const val=inp.value.trim().toUpperCase();
-      await this._update(id,'minorCode',val);
-      const ns=document.createElement('span');
-      ns.id=`minor-val-${id}`; ns.className=`inline-val${!val?' parse-val empty':''}`;
-      ns.textContent=val||'(미지정)'; ns.onclick=()=>admin.editMinor(id);
+  _selected: new Set(), // 선택된 ID 집합
+
+  // ── 체크박스 ────────────────────────────────────────────────
+  onRowCheck(id, checked) {
+    if (checked) this._selected.add(id);
+    else this._selected.delete(id);
+    this._updateBulkUI();
+    // 전체선택 체크박스 상태 동기화
+    const chkAll = document.getElementById('chk-all');
+    if (chkAll) chkAll.checked = this._selected.size === state.allScreens.length;
+  },
+
+  onSelectAll(chk) {
+    this._selected.clear();
+    if (chk.checked) state.allScreens.forEach(s => this._selected.add(s.id));
+    document.querySelectorAll('.admin-checkbox[data-id]').forEach(c => c.checked = chk.checked);
+    this._updateBulkUI();
+  },
+
+  toggleSelectAll() {
+    const chkAll = document.getElementById('chk-all');
+    if (chkAll) { chkAll.checked = !chkAll.checked; this.onSelectAll(chkAll); }
+  },
+
+  clearSelection() {
+    this._selected.clear();
+    document.querySelectorAll('.admin-checkbox').forEach(c => c.checked = false);
+    this._updateBulkUI();
+  },
+
+  _updateBulkUI() {
+    const cnt = this._selected.size;
+    const toolbar = document.getElementById('bulk-toolbar');
+    if (toolbar) {
+      toolbar.classList.toggle('visible', cnt > 0);
+      const el = document.getElementById('bulk-count');
+      if (el) el.textContent = `${cnt}개 선택`;
+    }
+  },
+
+  // ── 일괄 대분류 옵션 렌더 ───────────────────────────────────
+  _renderBulkMajorOptions() {
+    const sel = document.getElementById('bulk-major'); if(!sel) return;
+    sel.innerHTML = '<option value="">대분류 변경</option>';
+    Object.entries(MAJOR_MAP).forEach(([code, label]) => {
+      const opt = document.createElement('option');
+      opt.value = code; opt.textContent = `${code} ${label}`;
+      sel.appendChild(opt);
+    });
+  },
+
+  onBulkMajorChange() {
+    const majorCode = document.getElementById('bulk-major').value;
+    const midSel = document.getElementById('bulk-mid');
+    midSel.innerHTML = '<option value="">중분류 변경</option>';
+    if (!majorCode) return;
+    Object.entries(MID_MAP).forEach(([key, label]) => {
+      if (key.startsWith(majorCode)) {
+        const opt = document.createElement('option');
+        opt.value = key; opt.textContent = `${key} ${label}`;
+        midSel.appendChild(opt);
+      }
+    });
+  },
+
+  // ── 일괄 수정 실행 ───────────────────────────────────────────
+  async applyBulk() {
+    if (!this._selected.size) return;
+    const coVal     = document.getElementById('bulk-co').value.trim();
+    const majorCode = document.getElementById('bulk-major').value;
+    const midCode   = document.getElementById('bulk-mid').value;
+    const minorVal  = document.getElementById('bulk-minor').value.trim().toUpperCase();
+    const insVal    = document.getElementById('bulk-ins').value;
+
+    // 변경할 항목만 추출
+    const updates = {};
+    if (coVal)     updates.co = coVal;
+    if (majorCode) { updates.majorcode = majorCode; updates.majorlabel = MAJOR_MAP[majorCode]||majorCode; }
+    if (midCode)   { updates.midcode = midCode; updates.midlabel = MID_MAP[midCode]||midCode; }
+    if (minorVal !== '') updates.minorcode = minorVal;
+    if (insVal)    { updates.inslabel = insVal; updates.inscode = INS_CODE_MAP[insVal]||''; }
+
+    if (!Object.keys(updates).length) { ui.showToast('변경할 항목을 입력해주세요.', 3000); return; }
+
+    const ids = [...this._selected];
+    const btn = document.querySelector('.bulk-apply-btn');
+    btn.textContent = '저장 중...'; btn.disabled = true;
+
+    try {
+      const { error } = await supa.from('screens').update(updates).in('id', ids);
+      if (error) throw error;
+
+      // 로컬 상태 업데이트
+      ids.forEach(id => {
+        const s = state.allScreens.find(x => x.id === id);
+        if (!s) return;
+        if (coVal)     { s.co = coVal; }
+        if (majorCode) { s.majorCode = majorCode; s.majorLabel = MAJOR_MAP[majorCode]||majorCode; }
+        if (midCode)   { s.midCode = midCode; s.midLabel = MID_MAP[midCode]||midCode; }
+        if (minorVal !== '') s.minorCode = minorVal;
+        if (insVal)    { s.insLabel = insVal; s.insCode = INS_CODE_MAP[insVal]||''; }
+      });
+
+      // 입력 초기화
+      ['bulk-co','bulk-minor'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+      ['bulk-major','bulk-mid','bulk-ins'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+
+      this.clearSelection();
+      render.sidebar(); render.gallery(); render.adminTable();
+      ui.showToast(`${ids.length}개 항목이 수정됐습니다.`);
+    } catch(e) {
+      ui.showToast('일괄 수정 실패: ' + e.message, 4000);
+    } finally {
+      btn.textContent = '일괄 수정'; btn.disabled = false;
+    }
+  },
+
+  // ── 개별 텍스트 인라인 편집 ─────────────────────────────────
+  editTextField(id, field, span) {
+    const cur = span.textContent.trim();
+    const isEmpty = cur === '(미지정)';
+    const inp = document.createElement('input');
+    inp.className = 'cell-text-input';
+    inp.value = isEmpty ? '' : cur;
+    inp.placeholder = field === 'minorCode' ? '예: S01' : '';
+    span.replaceWith(inp); inp.focus(); inp.select();
+
+    const save = async () => {
+      const val = field === 'minorCode'
+        ? inp.value.trim().toUpperCase()
+        : inp.value.trim();
+      if (val === (isEmpty ? '' : cur)) { // 변경 없으면 복원
+        const ns = document.createElement('span');
+        ns.className = span.className; ns.textContent = cur;
+        ns.id = span.id||''; ns.title = '클릭해서 수정';
+        ns.onclick = () => admin.editTextField(id, field, ns);
+        inp.replaceWith(ns); return;
+      }
+      await this._updateField(id, field, val);
+      const s = state.allScreens.find(x=>x.id===id); if(s) s[field]=val;
+      const ns = document.createElement('span');
+      ns.className = `inline-val${field==='minorCode'&&!val?' parse-val empty':''}`;
+      ns.id = span.id||''; ns.title = '클릭해서 수정';
+      ns.textContent = val || (field==='minorCode'?'(미지정)':'-');
+      ns.onclick = () => admin.editTextField(id, field, ns);
       inp.replaceWith(ns);
-      const s=state.allScreens.find(x=>x.id===id); if(s) s.minorCode=val;
+      render.gallery();
     };
     inp.addEventListener('blur', save);
-    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){inp.value=cur;inp.blur();} });
+    inp.addEventListener('keydown', e => {
+      if (e.key==='Enter') inp.blur();
+      if (e.key==='Escape') { inp.value = isEmpty?'':cur; inp.blur(); }
+    });
   },
 
-  editCell(id, field, span) {
-    const cur=span.textContent.trim();
-    const inp=document.createElement('input'); inp.type='text'; inp.className='edit-input'; inp.value=cur;
-    span.replaceWith(inp); inp.focus();
-    const save=async()=>{
-      const val=inp.value.trim();
-      await this._update(id,field,val);
-      const ns=document.createElement('span'); ns.className='inline-val'; ns.textContent=val||cur;
-      ns.onclick=()=>admin.editCell(id,field,ns); inp.replaceWith(ns);
-      const s=state.allScreens.find(x=>x.id===id); if(s){s[field]=val; render.gallery();}
+  // ── 개별 대분류/중분류 셀렉트 편집 ─────────────────────────
+  editSelectField(id, type, span, curCode) {
+    const sel = document.createElement('select');
+    sel.className = 'cell-select';
+
+    if (type === 'major') {
+      sel.innerHTML = '<option value="">선택</option>';
+      Object.entries(MAJOR_MAP).forEach(([code, label]) => {
+        const opt = document.createElement('option');
+        opt.value = code; opt.textContent = `${code} ${label}`;
+        if (code === curCode) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    } else if (type === 'mid') {
+      const s = state.allScreens.find(x=>x.id===id);
+      const majorCode = s ? s.majorCode : '';
+      sel.innerHTML = '<option value="">선택</option>';
+      Object.entries(MID_MAP).forEach(([key, label]) => {
+        if (!majorCode || key.startsWith(majorCode)) {
+          const opt = document.createElement('option');
+          opt.value = key; opt.textContent = `${key} ${label}`;
+          if (key === curCode) opt.selected = true;
+          sel.appendChild(opt);
+        }
+      });
+    }
+
+    span.replaceWith(sel); sel.focus();
+
+    const save = async () => {
+      const val = sel.value;
+      if (!val) { sel.replaceWith(span); return; }
+      const label = type==='major' ? (MAJOR_MAP[val]||val) : (MID_MAP[val]||val);
+      const dbField = type==='major' ? {majorcode:val, majorlabel:label} : {midcode:val, midlabel:label};
+      await this._updateMulti(id, dbField);
+      const s = state.allScreens.find(x=>x.id===id);
+      if (s && type==='major') { s.majorCode=val; s.majorLabel=label; }
+      if (s && type==='mid')   { s.midCode=val;   s.midLabel=label; }
+      const ns = document.createElement('span');
+      ns.className='inline-val'; ns.title='클릭해서 수정'; ns.textContent=label;
+      ns.onclick = () => admin.editSelectField(id, type, ns, val);
+      sel.replaceWith(ns);
+      render.sidebar(); render.gallery();
     };
-    inp.addEventListener('blur', save);
-    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){inp.value=cur;inp.blur();} });
+    sel.addEventListener('blur', save);
+    sel.addEventListener('change', () => sel.blur());
+    sel.addEventListener('keydown', e => { if(e.key==='Escape') sel.replaceWith(span); });
   },
 
-  async _update(id, field, value) {
+  // ── 보험유형 셀렉트 편집 ────────────────────────────────────
+  editInsField(id, span) {
+    const s = state.allScreens.find(x=>x.id===id);
+    const cur = s ? s.insLabel : '';
+    const sel = document.createElement('select');
+    sel.className = 'cell-select';
+    ['자동차보험','건강보험','운전자보험','기타보험'].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      if (v === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    span.replaceWith(sel); sel.focus();
+
+    const save = async () => {
+      const val = sel.value; if(!val) { sel.replaceWith(span); return; }
+      const code = INS_CODE_MAP[val]||'';
+      await this._updateMulti(id, {inslabel:val, inscode:code});
+      if (s) { s.insLabel=val; s.insCode=code; }
+      const ns = document.createElement('span');
+      ns.className='inline-val ins-badge'; ns.title='클릭해서 수정'; ns.textContent=val;
+      ns.onclick = () => admin.editInsField(id, ns);
+      sel.replaceWith(ns);
+      render.sidebar(); render.gallery();
+    };
+    sel.addEventListener('blur', save);
+    sel.addEventListener('change', () => sel.blur());
+    sel.addEventListener('keydown', e => { if(e.key==='Escape') sel.replaceWith(span); });
+  },
+
+  // ── DB 업데이트 헬퍼 ─────────────────────────────────────────
+  async _updateField(id, field, value) {
     try {
       const {error}=await supa.from('screens').update({[field]:value}).eq('id',id);
+      if(error) throw error;
+      ui.showToast('저장됐습니다.');
+    } catch(e) { ui.showToast('저장 실패: '+e.message, 4000); }
+  },
+
+  async _updateMulti(id, fields) {
+    try {
+      const {error}=await supa.from('screens').update(fields).eq('id',id);
       if(error) throw error;
       ui.showToast('저장됐습니다.');
     } catch(e) { ui.showToast('저장 실패: '+e.message, 4000); }
@@ -541,6 +1028,7 @@ const admin = {
       if(error) throw error;
       state.allScreens=state.allScreens.filter(s=>s.id!==id);
       state.filtered  =state.filtered.filter(s=>s.id!==id);
+      this._selected.delete(id);
       render.sidebar(); render.gallery(); render.adminTable();
       ui.showToast('삭제됐습니다.');
     } catch(e) { ui.showToast('삭제 실패: '+e.message, 4000); }
