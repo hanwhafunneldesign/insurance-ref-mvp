@@ -410,9 +410,10 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
         <div class="drop-icon">📁</div>
         <div class="drop-title">파일을 드래그하거나 클릭해서 선택</div>
         <div class="drop-desc">
-          파일명 형식: <strong>기업명-화면ID-보험유형</strong><br>
+          파일명 형식: <strong>기업명-화면ID[-보험유형]</strong><br>
           예) 삼성생명-L01M01S01-자동차보험 · 교보라플-L08M01-공통<br>
-          소분류(S00)는 없어도 됩니다. 여러 장 동시 업로드 가능.
+          보험유형은 자동차보험/건강보험/운전자보험/기타보험/공통 · 코드(A~E)도 인식<br>
+          숫자·괄호·공란 자동 무시 · 여러 장 동시 업로드 가능
         </div>
       </div>
       <div class="upload-list" id="upload-list"></div>
@@ -477,33 +478,59 @@ const INS_CODE_MAP = { '자동차보험':'A','건강보험':'B','운전자보험
 function normalizeCo(name) { return name.replace(/\s+/g,'').toLowerCase(); }
 
 // ── 파일명 파싱 ──────────────────────────────────────────────
+// ── 파일명 파싱 (퍼지 매칭 버전) ────────────────────────────
+// 기업명 제외한 모든 섹션에서 노이즈(숫자, 괄호, 공란, 언더스코어) 제거 후
+// 알고 있는 태그(화면ID, 보험유형)를 스캔해서 매칭.
+// 매칭 안 되는 부분은 무시하고 아는 것만 등록.
 function parseFilename(filename) {
-  const base  = filename.replace(/\.[^/.]+$/, '');
+  const base = filename.replace(/\.[^/.]+$/, '');
   const parts = base.split('-');
-  if (parts.length < 2) return { ok:false, error:'파일명 형식 오류 (기업명-화면ID-보험유형)' };
+  if (parts.length < 1 || !parts[0].trim()) {
+    return { ok:false, error:'파일명에 기업명이 없습니다.' };
+  }
 
-  const co    = parts[0].trim();
-  const rawId = parts[1].trim().toUpperCase();
-  // 보험유형: 나머지 파트에서 빈값(--)은 무시하고 합치기
-  const rawIns = parts.slice(2).filter(p => p.trim()).join('').trim();
+  const co = parts[0].trim();
 
-  const m = rawId.match(/^(L\d{2})(M\d{2})?(S\d{2})?$/);
-  if (!m) return { ok:false, error:`화면ID 형식 오류: ${rawId} (예: L01M01 또는 L01M01S01)` };
+  // 기업명 제외 나머지 전체를 하나의 문자열로 합쳐서 분석
+  const rest = parts.slice(1).join('-');
 
-  const majorCode  = m[1] || '';
-  const midCode    = m[2] ? (majorCode + m[2]) : '';
-  const minorCode  = m[3] ? m[3] : '';
+  // ── 화면ID 추출: LxxMxxSxx 패턴 찾기 ──────────────────────
+  const idMatch = rest.toUpperCase().match(/(L\d{2})(M\d{2})?(S\d{2})?/);
+  if (!idMatch) {
+    return { ok:false, error:`화면ID(LxxMxx)를 찾을 수 없습니다: "${rest}"` };
+  }
+  const majorCode  = idMatch[1] || '';
+  const midSuffix  = idMatch[2] || '';
+  const midCode    = midSuffix ? (majorCode + midSuffix) : '';
+  const minorCode  = idMatch[3] || '';
+  const screenId   = majorCode + midSuffix + minorCode;
   const majorLabel = MAJOR_MAP[majorCode] || majorCode;
   const midLabel   = midCode ? (MID_MAP[midCode] || midCode) : '';
 
-  // 보험유형: A/B/C/D 코드 또는 한글명, 띄어쓰기 무시
-  const insKey = rawIns.replace(/\s+/g,'');
-  let insLabel = INS_LABEL_MAP[insKey] || INS_LABEL_MAP[insKey.toUpperCase()] || (rawIns ? rawIns : '');
-  const insCode = INS_CODE_MAP[insLabel] || '';
-  const screenId = rawId;
+  // ── 보험유형 추출: 알고 있는 태그를 순서대로 스캔 ──────────
+  // 노이즈 제거: 숫자 단독, 괄호+숫자, 공란, 특수문자 제거
+  const cleanRest = rest
+    .replace(/[()（）\[\]]/g, ' ')   // 괄호 제거
+    .replace(/\d+/g, ' ')             // 숫자 제거
+    .replace(/[_\s]+/g, ' ')         // 공란/언더스코어 → 스페이스
+    .trim();
 
-  // 기업명 중복 매칭 (띄어쓰기 무시)
-  const existCo = state.allScreens.find(s => normalizeCo(s.co||'') === normalizeCo(co));
+  // 알고 있는 모든 보험유형 키를 내림차순 길이로 정렬해서 긴 것부터 매칭
+  const insKeys = Object.keys(INS_LABEL_MAP).sort((a,b)=>b.length-a.length);
+  let insLabel = '';
+  for (const key of insKeys) {
+    // 공백 무시 후 포함 여부 확인
+    const cleanKey  = key.replace(/\s+/g,'').toLowerCase();
+    const cleanText = cleanRest.replace(/\s+/g,'').toLowerCase();
+    if (cleanKey && cleanText.includes(cleanKey)) {
+      insLabel = INS_LABEL_MAP[key];
+      break;
+    }
+  }
+  const insCode = INS_CODE_MAP[insLabel] || '';
+
+  // ── 기업명 중복 매칭 (띄어쓰기 무시) ──────────────────────
+  const existCo  = state.allScreens.find(s => normalizeCo(s.co||'') === normalizeCo(co));
   const resolvedCo = existCo ? existCo.co : co;
 
   return { ok:true, co:resolvedCo, screenId, majorCode, majorLabel, midCode, midLabel, minorCode, insLabel, insCode };
