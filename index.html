@@ -121,7 +121,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .admin-table tr:hover td{background:var(--bg)}
 .id-badge{display:inline-block;font-family:monospace;font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-alt);padding:2px 8px;border-radius:var(--r-sm)}
 .ins-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--r-sm);background:var(--bg-deep);color:var(--label-alt)}
-.thumb-sm{width:28px;height:40px;object-fit:cover;border-radius:3px;background:var(--bg-deep)}
+.thumb-sm{width:64px;height:92px;object-fit:cover;border-radius:var(--r-sm);background:var(--bg-deep)}
 .edit-input{border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font-size:12px;font-family:inherit;width:100%;min-width:80px}
 .edit-input:focus{outline:none;border-color:var(--primary)}
 .inline-val{cursor:pointer;padding:2px 4px;border-radius:3px}
@@ -174,6 +174,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .flow-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .flow-card-thumb.dragging{opacity:.4;border-color:var(--primary)}
 .flow-card-thumb.drag-over{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt)}
+.flow-card-dragging{opacity:.35;outline:2px dashed var(--primary);border-radius:var(--r-md)}
+.flow-card-drop-target .flow-card-thumb{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt);transform:scale(1.03)}
 .flow-card-meta{margin-top:6px;text-align:center}
 .flow-card-id{font-size:9px;font-weight:700;color:var(--primary);font-family:monospace;display:block}
 .flow-card-name{font-size:10px;color:var(--label-alt);display:block;margin-top:2px;line-height:1.3}
@@ -187,6 +189,9 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 /* Flow 뷰 편집 모드 */
 .flow-edit-mode .flow-card-thumb{cursor:grab}
 .flow-edit-mode .flow-card-thumb:active{cursor:grabbing}
+.flow-step{cursor:grab}
+.flow-step:active{cursor:grabbing}
+.flow-step.drag-over-step .flow-card-thumb{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt);transform:scale(1.03)}
 .flow-save-btn{height:30px;padding:0 14px;background:#22c55e;color:#fff;border:none;border-radius:var(--r-md);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .flow-save-btn:disabled{opacity:.5;cursor:not-allowed}
 /* 파트 그루핑 버튼 */
@@ -212,15 +217,15 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 <nav class="nav">
   <div class="logo">REF</div>
   <div class="seg-ctrl">
-    <button class="seg-btn active" id="nav-gallery" onclick="render.page('gallery')">갤러리</button>
-    <button class="seg-btn" id="nav-flow" onclick="render.page('flow')">Flow 뷰</button>
+    <button class="seg-btn" id="nav-gallery" onclick="render.page('gallery')">기능별</button>
+    <button class="seg-btn active" id="nav-flow" onclick="render.page('flow')">Flow 뷰</button>
     <button class="seg-btn" id="nav-admin" onclick="render.page('admin')">관리자</button>
   </div>
   <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
 </nav>
 
 <!-- GALLERY -->
-<div class="page active" id="page-gallery" style="padding:0">
+<div class="page" id="page-gallery" style="padding:0">
   <div class="gallery-topbar">
     <div style="font-size:13px;font-weight:600;">보험 서비스 UX 레퍼런스</div>
     <div id="results-info" style="font-size:12px;color:var(--label-assist)"></div>
@@ -247,7 +252,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 </div>
 
 <!-- FLOW VIEW -->
-<div class="page" id="page-flow">
+<div class="page active" id="page-flow">
   <div class="flow-topbar">
     <div class="flow-selector">
       <select class="flow-select" id="flow-co-select" onchange="flowView.onFilter()">
@@ -889,7 +894,9 @@ const flowView = {
     const groups = {};
     base.forEach(s => {
       const minorKey = s.minorLabel || '';
-      const gKey = s.flowGroup || `${s.co}||${minorKey}`;
+      // flowGroup이 저장돼 있으면 그걸 쓰고, 없으면 소분류 기반 자동 키 생성
+      const autoKey = `${s.co}||${minorKey}`;
+      const gKey = (s.flowGroup && s.flowGroup !== '') ? s.flowGroup : autoKey;
       if (!groups[gKey]) groups[gKey] = [];
       groups[gKey].push(s);
     });
@@ -964,33 +971,66 @@ const flowView = {
         meta.className='flow-card-meta';
         meta.innerHTML=`<span class="flow-card-id">${esc(s.screenId||'')}</span><span class="flow-card-name">${esc(s.midLabel||s.majorLabel||'')}</span>`;
 
-        // 드래그 이벤트
-        thumb.addEventListener('dragstart', e => {
-          flowView._dragSrc = { id:s.id, group:gKey };
-          thumb.classList.add('dragging');
-          e.dataTransfer.effectAllowed='move';
+        // 드래그앤드롭: step 단위로 이벤트 처리
+        // ── 드래그앤드롭: card에 draggable 부여, step은 drop 타겟 ──
+        card.draggable = true;
+        card.style.cursor = 'grab';
+
+        card.addEventListener('dragstart', e => {
+          flowView._dragSrc = { id: s.id, group: gKey };
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', String(s.id));
+          requestAnimationFrame(() => {
+            thumb.style.opacity = '0.35';
+            thumb.style.outline = '2px dashed var(--primary)';
+          });
         });
-        thumb.addEventListener('dragend', () => thumb.classList.remove('dragging'));
-        thumb.addEventListener('dragover', e => { e.preventDefault(); thumb.classList.add('drag-over'); });
-        thumb.addEventListener('dragleave', () => thumb.classList.remove('drag-over'));
-        thumb.addEventListener('drop', e => {
-          e.preventDefault(); thumb.classList.remove('drag-over');
-          if (!flowView._dragSrc || flowView._dragSrc.id===s.id) return;
-          if (flowView._dragSrc.group !== gKey) { ui.showToast('같은 그룹 내에서만 순서를 변경할 수 있어요.', 2500); return; }
+
+        card.addEventListener('dragend', () => {
+          thumb.style.opacity = '';
+          thumb.style.outline = '';
+          // 모든 하이라이트 제거
+          document.querySelectorAll('.flow-card-drop-target')
+            .forEach(el => el.classList.remove('flow-card-drop-target'));
+          flowView._dragSrc = null;
+        });
+
+        card.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (!flowView._dragSrc || flowView._dragSrc.id === s.id) return;
+          // 같은 그룹만 하이라이트
+          if (flowView._dragSrc.group !== gKey) return;
+          document.querySelectorAll('.flow-card-drop-target')
+            .forEach(el => el.classList.remove('flow-card-drop-target'));
+          card.classList.add('flow-card-drop-target');
+        });
+
+        card.addEventListener('dragleave', e => {
+          if (!card.contains(e.relatedTarget)) {
+            card.classList.remove('flow-card-drop-target');
+          }
+        });
+
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('flow-card-drop-target');
+          if (!flowView._dragSrc || flowView._dragSrc.id === s.id) return;
+          if (flowView._dragSrc.group !== gKey) {
+            ui.showToast('같은 소분류 그룹 내에서만 순서를 변경할 수 있어요.', 2500);
+            return;
+          }
           flowView._reorder(gKey, flowView._dragSrc.id, s.id);
         });
 
-        // 클릭으로 라이트박스 열기
-        card.addEventListener('click', (e) => {
-          if (e.target === thumb || thumb.contains(e.target)) {
-            const idx2 = state.filtered.findIndex(x=>x.id===s.id);
-            if (idx2>=0) lightbox.open(idx2);
-            else {
-              // filtered에 없으면 전체에서 찾아 임시 설정
-              const all = state.allScreens;
-              const i2 = all.findIndex(x=>x.id===s.id);
-              if (i2>=0) { state.filtered=[...all]; lightbox.open(i2); }
-            }
+        // 클릭으로 라이트박스 열기 (드래그와 구분)
+        card.addEventListener('click', () => {
+          if (flowView._dragSrc) return; // 드래그 중이면 무시
+          const idx2 = state.filtered.findIndex(x => x.id === s.id);
+          if (idx2 >= 0) { lightbox.open(idx2); }
+          else {
+            const i2 = state.allScreens.findIndex(x => x.id === s.id);
+            if (i2 >= 0) { state.filtered = [...state.allScreens]; lightbox.open(i2); }
           }
         });
 
@@ -1012,9 +1052,12 @@ const flowView = {
   },
 
   _reorder(gKey, fromId, toId) {
-    // 해당 그룹의 화면들 추출
+    // 해당 그룹의 화면들 추출 (소분류 기반 gKey 매칭)
     const grpScreens = state.allScreens
-      .filter(s=>(s.flowGroup||`${s.co}||${s.insLabel}`)===gKey)
+      .filter(s => {
+        const sKey = s.flowGroup || `${s.co}||${s.minorLabel||''}`;
+        return sKey === gKey;
+      })
       .sort((a,b)=>{
         const ao=a.flowOrder||0, bo=b.flowOrder||0;
         if(ao>0&&bo>0) return ao-bo;
@@ -1960,7 +2003,7 @@ async function init() {
     flowOrder:  s.floworder   || s.flowOrder   || 0,
   }));
   state.filtered = [...state.allScreens];
-  render.sidebar(); render.gallery();
+  render.sidebar(); render.gallery(); flowView.init();
 }
 init();
 </script>
