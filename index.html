@@ -92,6 +92,11 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .drop-title{font-size:14px;font-weight:700;color:var(--label-normal);margin-bottom:4px}
 .drop-desc{font-size:12px;color:var(--label-assist);line-height:1.6}
 .upload-list{display:flex;flex-direction:column;gap:8px}
+.upload-item{transition:opacity .15s}
+.upload-item.upload-dragging{opacity:.4;outline:2px dashed var(--primary);border-radius:var(--r-md)}
+.upload-item.upload-drop-target{border-color:var(--primary);background:var(--primary-alt)}
+.upload-drag-handle{cursor:grab;color:var(--label-disable);font-size:16px;flex-shrink:0;user-select:none;padding:0 4px}
+.upload-drag-handle:active{cursor:grabbing}
 .upload-item{background:var(--bg);border-radius:var(--r-md);padding:12px 14px;border:1px solid var(--line-alt)}
 .upload-item.has-error{border-color:var(--error);background:var(--error-bg)}
 .upload-item.is-success{border-color:var(--success);background:#F0FFF4}
@@ -332,7 +337,14 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
       <span id="lb-counter" style="font-size:12px;color:rgba(255,255,255,.4);min-width:50px;text-align:center"></span>
       <button class="lb-nav-btn" id="lb-next" onclick="lightbox.navigate(1)">▶</button>
     </div>
-    <button class="btn-primary" onclick="lightbox.close()">닫기</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="lb-nav-btn" id="lb-delete-btn" onclick="lightbox.deleteCurrentScreen()"
+        title="이 화면 삭제"
+        style="width:auto;padding:0 12px;color:#FF6B6B;border-color:rgba(255,107,107,0.3);font-size:12px;font-weight:700;">
+        🗑 삭제
+      </button>
+      <button class="btn-primary" onclick="lightbox.close()">닫기</button>
+    </div>
   </div>
   <div class="lb-body" onclick="event.stopPropagation()">
     <div class="lb-preview-wrap" id="sm-preview-wrap"></div>
@@ -803,6 +815,40 @@ const filter = {
 const lightbox = {
   open(idx)  { state.curIdx=idx; this._render(); document.getElementById('screen-modal').classList.add('open'); QUOTA.updateUI(); },
   close()    { document.getElementById('screen-modal').classList.remove('open'); ai.reset(); if(lbEdit._editing) lbEdit.cancel(); },
+
+  async deleteCurrentScreen() {
+    const s = state.filtered[state.curIdx];
+    if (!s) return;
+    if (!confirm(`"${s.co} - ${s.screenId}" 화면을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+    const btn = document.getElementById('lb-delete-btn');
+    btn.disabled = true; btn.textContent = '삭제 중...';
+
+    try {
+      const { error } = await supa.from('screens').delete().eq('id', s.id);
+      if (error) throw error;
+
+      // 로컬 상태에서 제거
+      state.allScreens = state.allScreens.filter(x => x.id !== s.id);
+      state.filtered   = state.filtered.filter(x => x.id !== s.id);
+
+      render.sidebar(); render.gallery();
+
+      // 다음 화면으로 이동 or 닫기
+      if (state.filtered.length === 0) {
+        this.close();
+        ui.showToast('삭제됐습니다.');
+      } else {
+        state.curIdx = Math.min(state.curIdx, state.filtered.length - 1);
+        this._render();
+        ui.showToast('삭제됐습니다.');
+      }
+    } catch(e) {
+      ui.showToast('삭제 실패: ' + e.message, 4000);
+    } finally {
+      btn.disabled = false; btn.textContent = '🗑 삭제';
+    }
+  },
   navigate(d){ if(lbEdit._editing) return; const n=state.curIdx+d; if(n<0||n>=state.filtered.length)return; state.curIdx=n; this._render(); ai.reset(); },
   _render() {
     const s=state.filtered[state.curIdx]; if(!s) return;
@@ -903,7 +949,7 @@ const flowView = {
       groups[gKey].push(s);
     });
 
-    // 각 그룹 내 정렬: flowOrder > 0이면 flowOrder순, 0이면 id순
+    // 각 그룹 내 정렬: flowOrder > 0이면 flowOrder순, 없으면 id 오름차순
     Object.values(groups).forEach(arr => {
       arr.sort((a,b) => {
         const ao = a.flowOrder||0, bo = b.flowOrder||0;
@@ -914,8 +960,15 @@ const flowView = {
       });
     });
 
+    // 그룹 자체 정렬: 최근 업로드된 화면(가장 큰 id)이 있는 그룹이 상단
+    const sortedGroups = Object.entries(groups).sort(([, a], [, b]) => {
+      const maxA = Math.max(...a.map(s=>s.id||0));
+      const maxB = Math.max(...b.map(s=>s.id||0));
+      return maxB - maxA; // 최신(큰 id)이 앞
+    });
+
     body.innerHTML = '';
-    Object.entries(groups).forEach(([gKey, screens]) => {
+    sortedGroups.forEach(([gKey, screens]) => {
       const parts    = gKey.split('||');
       const coName   = parts[0];
       const insName  = parts[1]||'';   // 소분류명 (또는 보험유형)
@@ -1669,22 +1722,37 @@ const upload = {
     this._renderList();
   },
 
+  _dragUploadIdx: null, // 업로드 목록 드래그 인덱스
+
   _renderList() {
     const list = document.getElementById('upload-list');
     const btn  = document.getElementById('upload-submit-btn');
     btn.disabled = !this.files.some(f=>f.status==='pending');
     if (!this.files.length) { list.innerHTML=''; return; }
-    const STATUS_TXT  = {pending:'대기중',error:'파싱 오류',uploading:'업로드 중...',success:'완료',fail:'실패'};
-    const STATUS_CLS  = {pending:'pending',error:'err',uploading:'uploading',success:'ok',fail:'err'};
-    list.innerHTML = this.files.map((item, i)=>{
-      const p=item.parsed;
-      const stxt=STATUS_TXT[item.status]||''; const scls=STATUS_CLS[item.status]||'';
+
+    const STATUS_TXT = {pending:'대기중',error:'파싱 오류',uploading:'업로드 중...',success:'완료',fail:'실패'};
+    const STATUS_CLS = {pending:'pending',error:'err',uploading:'uploading',success:'ok',fail:'err'};
+
+    // DOM 기반으로 렌더 (드래그 이벤트 부착 위해)
+    list.innerHTML = '';
+    this.files.forEach((item, i) => {
+      const p = item.parsed;
+      const stxt = STATUS_TXT[item.status]||'';
+      const scls = STATUS_CLS[item.status]||'';
       const itemCls = item.status==='error'?' has-error':item.status==='success'?' is-success':'';
-      return `<div class="upload-item${itemCls}">
+
+      const el = document.createElement('div');
+      el.className = `upload-item${itemCls}`;
+      el.dataset.idx = i;
+      el.draggable = item.status === 'pending'; // 대기중인 것만 드래그 가능
+
+      el.innerHTML = `
         <div class="upload-item-header">
+          ${item.status==='pending'?'<span class="upload-drag-handle" title="드래그로 순서 변경">⠿</span>':''}
           <img class="upload-thumb" src="${item.preview}" alt="">
           <span class="upload-filename" title="${esc(item.file.name)}">${esc(item.file.name)}</span>
           <span class="upload-status ${scls}">${stxt}</span>
+          ${item.status==='pending'?`<button onclick="upload.removeFile(${i})" style="height:22px;padding:0 8px;background:transparent;border:1px solid var(--line);border-radius:4px;font-size:11px;cursor:pointer;color:var(--error);flex-shrink:0">✕</button>`:''}
         </div>
         ${p.ok?`
         <div class="parse-grid">
@@ -1693,23 +1761,58 @@ const upload = {
           <div class="parse-field"><span class="parse-label">보험유형</span><div class="parse-val">${esc(p.insLabel||'-')}</div></div>
           <div class="parse-field"><span class="parse-label">대분류</span><div class="parse-val">${esc(p.majorLabel)}</div></div>
           <div class="parse-field"><span class="parse-label">중분류</span><div class="parse-val">${esc(p.midLabel||'-')}</div></div>
-          <div class="parse-field"><span class="parse-label">소분류</span>
-            <div class="parse-val${!p.minorCode?' empty':''}">
-              <select style="width:100%;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;outline:none;cursor:pointer"
-                onchange="upload.files[${i}].parsed.minorCode=this.value">
-                ${(MINOR_MAP_BY_MAJOR[p.majorCode]||[]).length===0
-                  ? '<option value="">(소분류 없음)</option>'
-                  : '<option value="">(없음)</option>' + (MINOR_MAP_BY_MAJOR[p.majorCode]||[]).map(o=>`<option value="${o.code}"${p.minorCode===o.code?' selected':''}>${o.label}</option>`).join('')
-                }
-              </select>
+          <div class="parse-field"><span class="parse-label">소분류 (텍스트)</span>
+            <div class="parse-val${!p.minorLabel?' empty':''}">
+              <input type="text" style="width:100%;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;outline:none"
+                placeholder="${p.minorLabel||'미지정'}" value="${esc(p.minorLabel||'')}"
+                onchange="upload.files[${i}].parsed.minorLabel=this.value.trim()">
             </div>
           </div>
-        </div>`:
-        `<div class="parse-grid"><div class="parse-err">⚠ ${esc(p.error)}</div></div>`}
+        </div>`:`<div class="parse-grid"><div class="parse-err">⚠ ${esc(p.error)}</div></div>`}
         ${item.status==='uploading'?`<div class="progress-bar"><div class="progress-fill" style="width:${item.progress||10}%"></div></div>`:''}
-        ${item.errorMsg?`<div style="font-size:11px;color:var(--error);margin-top:4px">오류: ${esc(item.errorMsg)}</div>`:''}
-      </div>`;
-    }).join('');
+        ${item.errorMsg?`<div style="font-size:11px;color:var(--error);margin-top:4px">오류: ${esc(item.errorMsg)}</div>`:''}`;
+
+      // 드래그 이벤트 (pending인 것만)
+      if (item.status === 'pending') {
+        el.addEventListener('dragstart', e => {
+          upload._dragUploadIdx = i;
+          requestAnimationFrame(() => el.classList.add('upload-dragging'));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', () => {
+          el.classList.remove('upload-dragging');
+          list.querySelectorAll('.upload-drop-target').forEach(x=>x.classList.remove('upload-drop-target'));
+          upload._dragUploadIdx = null;
+        });
+        el.addEventListener('dragover', e => {
+          e.preventDefault();
+          if (upload._dragUploadIdx === null || upload._dragUploadIdx === i) return;
+          list.querySelectorAll('.upload-drop-target').forEach(x=>x.classList.remove('upload-drop-target'));
+          el.classList.add('upload-drop-target');
+        });
+        el.addEventListener('dragleave', e => {
+          if (!el.contains(e.relatedTarget)) el.classList.remove('upload-drop-target');
+        });
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('upload-drop-target');
+          const from = upload._dragUploadIdx;
+          if (from === null || from === i) return;
+          // 배열 재정렬
+          const [moved] = upload.files.splice(from, 1);
+          upload.files.splice(i, 0, moved);
+          upload._dragUploadIdx = null;
+          upload._renderList();
+        });
+      }
+
+      list.appendChild(el);
+    });
+  },
+
+  removeFile(idx) {
+    this.files.splice(idx, 1);
+    this._renderList();
   },
 
   async submitAll() {
