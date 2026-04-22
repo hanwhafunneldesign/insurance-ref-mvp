@@ -857,10 +857,12 @@ const lightbox = {
 // ── Flow 뷰 ─────────────────────────────────────────────────
 const flowView = {
   _dirty: false,      // 순서 변경됐는지
+  _saveTimer: null,   // 자동 저장 debounce 타이머
   _dragSrc: null,     // 드래그 중인 카드 데이터
 
   init() {
     this._dirty = false;
+    clearTimeout(this._saveTimer);
     document.getElementById('flow-save-btn').style.display='none';
     this._populateCoSelect();
     this.render();
@@ -1081,26 +1083,43 @@ const flowView = {
     });
 
     this._dirty = true;
-    document.getElementById('flow-save-btn').style.display='';
     this.render();
+    // 드래그 후 자동 저장 (debounce 500ms)
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this.saveOrder(), 500);
   },
 
-  async saveOrder() {
+  async saveOrder(auto=false) {
     const btn = document.getElementById('flow-save-btn');
-    btn.disabled=true; btn.textContent='저장 중...';
+    if (!auto) { btn.disabled=true; btn.textContent='저장 중...'; }
+
+    // 저장 중 표시 (우측 상단 작은 인디케이터)
+    const hint = document.getElementById('flow-edit-hint');
+    const origHint = hint?.textContent;
+    if (hint && auto) hint.textContent = '💾 순서 저장 중...';
+
     try {
       const toSave = state.allScreens.filter(s=>s.flowOrder>0);
+      if (!toSave.length) return;
+
+      // 배치 업데이트: 순서 바뀐 것만
       for (const s of toSave) {
         const {error} = await supa.from('screens')
           .update({floworder:s.flowOrder, flowgroup:s.flowGroup})
           .eq('id',s.id);
         if(error) throw error;
       }
-      this._dirty=false;
-      btn.style.display='none';
-      ui.showToast('플로우 순서가 저장됐습니다.');
+      this._dirty = false;
+      btn.style.display = 'none';
+      if (hint && auto) hint.textContent = '✅ 순서 저장됨';
+      if (!auto) ui.showToast('플로우 순서가 저장됐습니다.');
+      // 힌트 원복
+      setTimeout(() => { if(hint) hint.textContent = origHint; }, 2000);
     } catch(e) {
-      ui.showToast('저장 실패: '+e.message, 4000);
+      // 자동 저장 실패 시 수동 저장 버튼 표시
+      btn.style.display = '';
+      ui.showToast('자동 저장 실패. 수동으로 저장해주세요.', 4000);
+      if (hint) hint.textContent = origHint;
     } finally {
       btn.disabled=false; btn.textContent='순서 저장';
     }
