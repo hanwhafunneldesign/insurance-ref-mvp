@@ -283,7 +283,14 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
       <select class="bulk-select" id="bulk-mid">
         <option value="">중분류 변경</option>
       </select>
-      <input class="bulk-input" id="bulk-minor" placeholder="소분류 (예: S01)" style="width:100px">
+      <select class="bulk-select" id="bulk-minor" style="min-width:120px">
+        <option value="">소분류 변경</option>
+        <option value="">─────</option>
+        <option value="S01">S01 브랜드가입</option>
+        <option value="S02">S02 청약</option>
+        <option value="S03">S03 배서</option>
+        <option value="__CLEAR__">(소분류 제거)</option>
+      </select>
       <select class="bulk-select" id="bulk-ins">
         <option value="">보험유형 변경</option>
         <option value="자동차보험">자동차보험</option>
@@ -353,7 +360,9 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
         </div>
         <div class="lb-field-edit">
           <span class="lb-info-lbl">소분류</span>
-          <input class="lb-field-input" id="lb-edit-minor" placeholder="예: S01 (없으면 공란)">
+          <select class="lb-field-select" id="lb-edit-minor">
+            <option value="">(없음)</option>
+          </select>
         </div>
         <div class="lb-field-edit">
           <span class="lb-info-lbl">보험유형</span>
@@ -465,6 +474,20 @@ const MID_MAP = {
   'L07M01':'청약내용 확인','L07M02':'결제','L07M03':'결제수단','L07M04':'결제완료·실패','L07M05':'청약약관동의',
   'L08M01':'메인화면','L08M02':'메인화면-메뉴',
 };
+// 소분류 맵: 대분류 코드 → [{code, label}]
+// L00(공통컴포넌트), L08(일반), L03 제외한 나머지: S02 청약, S03 배서
+// L03 전용: S01 브랜드가입, S02 청약, S03 배서
+const MINOR_MAP_BY_MAJOR = {
+  'L01': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L02': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L03': [{code:'S01',label:'S01 브랜드가입'},{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L04': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L05': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L06': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  'L07': [{code:'S02',label:'S02 청약'},{code:'S03',label:'S03 배서'}],
+  // L00, L08 → 소분류 없음
+};
+
 const INS_LABEL_MAP = {
   'A':'자동차보험','B':'건강보험','C':'운전자보험','D':'기타보험','E':'공통',
   '자동차':'자동차보험','자동차보험':'자동차보험',
@@ -692,7 +715,7 @@ const render = {
       // 소분류 (텍스트 인라인)
       const minor = s.minorCode||'';
       const tdMinor = document.createElement('td');
-      tdMinor.innerHTML = `<span id="minor-val-${s.id}" class="inline-val${!minor?' parse-val empty':''}" title="클릭해서 수정" onclick="admin.editTextField(${s.id},'minorCode',this)">${minor?esc(minor):'(미지정)'}</span>`;
+      tdMinor.innerHTML = `<span id="minor-val-${s.id}" class="inline-val${!minor?' parse-val empty':''}" title="클릭해서 수정" onclick="admin.editMinorSelect(${s.id},this)">${minor?esc(minor):'(미지정)'}</span>`;
 
       // 보험유형 (셀렉트)
       const tdIns = document.createElement('td');
@@ -1019,7 +1042,8 @@ const lbEdit = {
     // 값 채우기
     document.getElementById('lb-edit-co').value = s.co||'';
     document.getElementById('lb-edit-screen-id-display').textContent = s.screenId||'-';
-    document.getElementById('lb-edit-minor').value = s.minorCode||'';
+    // 소분류 옵션을 현재 대분류에 맞게 렌더
+    lbEdit._renderMinorOptions(s.majorCode, s.minorCode||'');
 
     // 대분류 옵션
     const majSel = document.getElementById('lb-edit-major');
@@ -1041,6 +1065,7 @@ const lbEdit = {
   onMajorChange() {
     const majorCode = document.getElementById('lb-edit-major').value;
     this._renderMidOptions(majorCode, '');
+    this._renderMinorOptions(majorCode, '');
   },
 
   _renderMidOptions(majorCode, selectedMidCode) {
@@ -1056,6 +1081,24 @@ const lbEdit = {
     });
   },
 
+  _renderMinorOptions(majorCode, selectedMinorCode) {
+    const minorSel = document.getElementById('lb-edit-minor');
+    if (!minorSel) return;
+    const opts = MINOR_MAP_BY_MAJOR[majorCode] || [];
+    minorSel.innerHTML = '<option value="">(없음)</option>';
+    opts.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.code; opt.textContent = o.label;
+      if (o.code === selectedMinorCode) opt.selected = true;
+      minorSel.appendChild(opt);
+    });
+    // 소분류가 없는 대분류면 비활성화
+    minorSel.disabled = opts.length === 0;
+    if (opts.length === 0) {
+      minorSel.innerHTML = '<option value="">(해당 없음)</option>';
+    }
+  },
+
   async save() {
     const s = state.filtered[state.curIdx]; if(!s) return;
     const btn = document.getElementById('lb-edit-save');
@@ -1064,7 +1107,7 @@ const lbEdit = {
     const coVal    = document.getElementById('lb-edit-co').value.trim();
     const majorCode= document.getElementById('lb-edit-major').value;
     const midCode  = document.getElementById('lb-edit-mid').value;
-    const minorVal = document.getElementById('lb-edit-minor').value.trim().toUpperCase();
+    const minorVal = document.getElementById('lb-edit-minor').value || '';
     const insVal   = document.getElementById('lb-edit-ins').value;
 
     const updates = {};
@@ -1195,7 +1238,7 @@ const admin = {
     const coVal     = document.getElementById('bulk-co').value.trim();
     const majorCode = document.getElementById('bulk-major').value;
     const midCode   = document.getElementById('bulk-mid').value;
-    const minorVal  = document.getElementById('bulk-minor').value.trim().toUpperCase();
+    // 소분류는 아래에서 별도 처리
     const insVal    = document.getElementById('bulk-ins').value;
 
     // 변경할 항목만 추출
@@ -1203,7 +1246,9 @@ const admin = {
     if (coVal)     updates.co = coVal;
     if (majorCode) { updates.majorcode = majorCode; updates.majorlabel = MAJOR_MAP[majorCode]||majorCode; }
     if (midCode)   { updates.midcode = midCode; updates.midlabel = MID_MAP[midCode]||midCode; }
-    if (minorVal !== '') updates.minorcode = minorVal;
+    const rawMinor = document.getElementById('bulk-minor').value;
+    if (rawMinor === '__CLEAR__') updates.minorcode = '';
+    else if (rawMinor) updates.minorcode = rawMinor;
     if (insVal)    { updates.inslabel = insVal; updates.inscode = INS_CODE_MAP[insVal]||''; }
 
     if (!Object.keys(updates).length) { ui.showToast('변경할 항목을 입력해주세요.', 3000); return; }
@@ -1239,6 +1284,36 @@ const admin = {
     } finally {
       btn.textContent = '일괄 수정'; btn.disabled = false;
     }
+  },
+
+  // ── 개별 소분류 셀렉트 편집 ────────────────────────────────
+  editMinorSelect(id, span) {
+    const s = state.allScreens.find(x=>x.id===id);
+    const cur = s ? (s.minorCode||'') : '';
+    const opts = MINOR_MAP_BY_MAJOR[s?.majorCode||''] || [];
+    if (!opts.length) {
+      ui.showToast('이 대분류는 소분류가 없습니다.', 2000); return;
+    }
+    const sel = document.createElement('select');
+    sel.className = 'cell-select';
+    sel.innerHTML = '<option value="">(없음)</option>' +
+      opts.map(o=>`<option value="${o.code}"${o.code===cur?' selected':''}>${o.label}</option>`).join('');
+    span.replaceWith(sel); sel.focus();
+    const save = async () => {
+      const val = sel.value;
+      await this._updateField(id, 'minorcode', val);
+      if(s) s.minorCode = val;
+      const ns = document.createElement('span');
+      ns.id = `minor-val-${id}`;
+      ns.className = `inline-val${!val?' parse-val empty':''}`;
+      ns.title = '클릭해서 수정';
+      ns.textContent = val || '(미지정)';
+      ns.onclick = () => admin.editMinorSelect(id, ns);
+      sel.replaceWith(ns);
+    };
+    sel.addEventListener('blur', save);
+    sel.addEventListener('change', () => sel.blur());
+    sel.addEventListener('keydown', e => { if(e.key==='Escape') sel.replaceWith(span); });
   },
 
   // ── 개별 텍스트 인라인 편집 ─────────────────────────────────
@@ -1504,8 +1579,13 @@ const upload = {
           <div class="parse-field"><span class="parse-label">중분류</span><div class="parse-val">${esc(p.midLabel||'-')}</div></div>
           <div class="parse-field"><span class="parse-label">소분류</span>
             <div class="parse-val${!p.minorCode?' empty':''}">
-              <input type="text" placeholder="${p.minorCode||'미지정 (추후 입력 가능)'}" value="${esc(p.minorCode)}"
-                onchange="upload.files[${i}].parsed.minorCode=this.value.trim().toUpperCase()">
+              <select style="width:100%;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;outline:none;cursor:pointer"
+                onchange="upload.files[${i}].parsed.minorCode=this.value">
+                ${(MINOR_MAP_BY_MAJOR[p.majorCode]||[]).length===0
+                  ? '<option value="">(소분류 없음)</option>'
+                  : '<option value="">(없음)</option>' + (MINOR_MAP_BY_MAJOR[p.majorCode]||[]).map(o=>`<option value="${o.code}"${p.minorCode===o.code?' selected':''}>${o.label}</option>`).join('')
+                }
+              </select>
             </div>
           </div>
         </div>`:
