@@ -163,11 +163,11 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .flow-group-title{font-size:15px;font-weight:800;color:var(--label-strong)}
 .flow-group-sub{font-size:12px;color:var(--label-assist)}
 .flow-group-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-full);background:var(--primary-alt);color:var(--primary)}
-.flow-lane{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding-bottom:12px}
-.flow-step{display:flex;flex-direction:column;align-items:center;position:relative;flex-shrink:0}
-.flow-step-connector{position:absolute;top:60px;right:-20px;width:40px;height:2px;background:var(--line);z-index:1;display:flex;align-items:center;justify-content:center}
+.flow-lane{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;padding-bottom:12px;overflow-x:visible}
+.flow-step{display:flex;flex-direction:column;align-items:center;position:relative}
+.flow-step-connector{display:none}
 .flow-step-connector::after{content:'▶';font-size:10px;color:var(--label-disable);margin-left:14px}
-.flow-card{width:100px;margin:0 14px;cursor:pointer;position:relative;z-index:2}
+.flow-card{width:100%;margin:0;cursor:pointer;position:relative;z-index:2}
 .flow-card:hover .flow-card-thumb{box-shadow:0 4px 16px rgba(53,95,255,.3);transform:translateY(-2px)}
 .flow-card-thumb{aspect-ratio:390/844;border-radius:var(--r-md);overflow:hidden;background:var(--bg-deep);border:2px solid var(--line-alt);transition:all .2s}
 .flow-card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
