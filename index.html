@@ -522,6 +522,9 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
         <option value="기타보험">기타보험</option>
         <option value="공통">공통</option>
       </select>
+      <select class="flow-select" id="flow-minor-select" onchange="flowView.onFilter()" style="display:none">
+        <option value="">전체 소분류</option>
+      </select>
     </div>
     <div class="flow-edit-hint" id="flow-edit-hint">✦ 카드를 드래그해서 순서를 바꿀 수 있어요</div>
     <button class="flow-save-btn" id="flow-save-btn" onclick="flowView.saveOrder()" style="display:none">순서 저장</button>
@@ -1295,6 +1298,7 @@ const flowView = {
     clearTimeout(this._saveTimer);
     document.getElementById('flow-save-btn').style.display='none';
     this._populateCoSelect();
+    this._populateMinorSelect();
     this.render();
   },
 
@@ -1305,17 +1309,46 @@ const flowView = {
     sel.innerHTML = cos.map(c => `<option value="${esc(c)}"${c===cur?' selected':''}>${c||'전체 기업'}</option>`).join('');
   },
 
-  onFilter() { this.render(); },
+  onFilter() { this._populateMinorSelect(); this.render(); },
 
-  render() {
-    const body   = document.getElementById('flow-body');
+  _populateMinorSelect() {
     const coVal  = document.getElementById('flow-co-select').value;
     const insVal = document.getElementById('flow-ins-select').value;
+    const sel    = document.getElementById('flow-minor-select');
+    const curVal = sel.value;
 
-    // 기업 필터 적용
+    // 현재 필터 기준으로 소분류 목록 추출
     let base = state.allScreens;
-    if (coVal)  base = base.filter(s=>s.co===coVal);
-    if (insVal) base = base.filter(s=>s.insLabel===insVal);
+    if (coVal)  base = base.filter(s => s.co === coVal);
+    if (insVal) base = base.filter(s => s.insLabel === insVal);
+
+    const minors = [...new Set(base.map(s => s.minorLabel||'').filter(Boolean))].sort();
+
+    if (!coVal && !insVal) {
+      // 아무 필터도 없으면 소분류 셀렉트 숨김
+      sel.style.display = 'none';
+      sel.value = '';
+      return;
+    }
+
+    sel.style.display = '';
+    const prev = curVal && minors.includes(curVal) ? curVal : '';
+    sel.innerHTML = '<option value="">전체 소분류</option>' +
+      minors.map(m => `<option value="${esc(m)}"${m===prev?' selected':''}>${esc(m)}</option>`).join('');
+    if (!prev) sel.value = '';
+  },
+
+  render() {
+    const body       = document.getElementById('flow-body');
+    const coVal      = document.getElementById('flow-co-select').value;
+    const insVal     = document.getElementById('flow-ins-select').value;
+    const minorVal   = document.getElementById('flow-minor-select').value;
+
+    // 기업/보험유형/소분류 필터 적용
+    let base = state.allScreens;
+    if (coVal)    base = base.filter(s=>s.co===coVal);
+    if (insVal)   base = base.filter(s=>s.insLabel===insVal);
+    if (minorVal) base = base.filter(s=>(s.minorLabel||'')=== minorVal);
 
     if (!base.length) {
       body.innerHTML = '<div class="flow-empty">조건에 맞는 화면이 없습니다.</div>';
