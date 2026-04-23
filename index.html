@@ -743,7 +743,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
           파일명 형식: <strong>기업명-화면ID[-보험유형]</strong><br>
           예) 삼성생명-L01M01S01-자동차보험 · 교보라플-L08M01-공통<br>
           보험유형은 자동차보험/건강보험/운전자보험/기타보험/공통 · 코드(A~E)도 인식<br>
-          숫자·괄호·공란 자동 무시 · 여러 장 동시 업로드 가능
+          숫자·괄호·공란 자동 무시 · 여러 장 동시 업로드 가능<br>
+          <span style="color:var(--primary);font-weight:600">✂ 긴 스크롤 화면은 390×844 단위로 자동 분할됩니다</span>
         </div>
       </div>
       <div class="upload-list" id="upload-list"></div>
@@ -2215,12 +2216,87 @@ const upload = {
   },
   onFileSelect(e) { this._addFiles(Array.from(e.target.files)); e.target.value=''; },
 
-  _addFiles(files) {
-    files.filter(f=>f.type.startsWith('image/')).forEach(file=>{
-      const parsed  = parseFilename(file.name);
-      const preview = URL.createObjectURL(file);
-      this.files.push({ file, parsed, preview, status: parsed.ok?'pending':'error' });
-    });
+  async _addFiles(files) {
+    const SLICE_H = 844;
+    const SLICE_W = 390;
+
+    // 처리 중 표시
+    const dz = document.getElementById('drop-zone');
+    if (dz) { dz.classList.add('drag-over'); dz.querySelector('.drop-title').textContent = '이미지 분석 중...'; }
+
+    for (const file of files.filter(f=>f.type.startsWith('image/'))) {
+      const parsed = parseFilename(file.name);
+
+      // 이미지 크기 측정
+      const bmp = await createImageBitmap(file).catch(()=>null);
+      if (!bmp) {
+        const preview = URL.createObjectURL(file);
+        this.files.push({ file, parsed, preview, status: parsed.ok?'pending':'error' });
+        continue;
+      }
+
+      const naturalH = bmp.height;
+      const naturalW = bmp.width;
+
+      // 슬라이싱 필요 여부 판단: 높이가 SLICE_H * 1.3 초과면 분할
+      const sliceCount = Math.round(naturalH / (naturalW > 0 ? (naturalH / (naturalH / naturalW * SLICE_W)) : naturalH) / SLICE_H);
+      const scaledH = Math.round(naturalH / naturalW * SLICE_W); // 390px 기준 환산 높이
+      const needsSlice = scaledH > SLICE_H * 1.3;
+
+      if (!needsSlice) {
+        // 단일 화면 그대로
+        const preview = URL.createObjectURL(file);
+        this.files.push({ file, parsed, preview, status: parsed.ok?'pending':'error' });
+        bmp.close();
+        continue;
+      }
+
+      // ── 슬라이싱 ──
+      const totalSlices = Math.ceil(scaledH / SLICE_H);
+      const ext = file.name.split('.').pop() || 'png';
+      const baseScreenId = parsed.screenId || 'S01';
+      const sliceFiles = [];
+
+      for (let s = 0; s < totalSlices; s++) {
+        const canvas = document.createElement('canvas');
+        canvas.width  = SLICE_W;
+        canvas.height = SLICE_H;
+        const ctx = canvas.getContext('2d');
+
+        // 원본 이미지에서 해당 슬라이스 영역 계산
+        const srcSliceH = Math.round((SLICE_H / scaledH) * naturalH);
+        const srcY      = Math.round((s * SLICE_H / scaledH) * naturalH);
+        const srcActualH = Math.min(srcSliceH, naturalH - srcY);
+
+        // 마지막 슬라이스가 짧으면 상단부터 채우고 나머지 배경색
+        ctx.fillStyle = '#f7f7f8';
+        ctx.fillRect(0, 0, SLICE_W, SLICE_H);
+        ctx.drawImage(bmp,
+          0, srcY, naturalW, srcActualH,   // source
+          0, 0, SLICE_W, Math.round(srcActualH / naturalH * scaledH) // dest
+        );
+
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const sliceId = `${baseScreenId}-${s+1}`;
+        const sliceName = file.name.replace(baseScreenId, sliceId).replace(/\.[^.]+$/, `.${ext}`);
+        const sliceFile = new File([blob], sliceName, { type: 'image/png' });
+        const sliceParsed = parseFilename(sliceName);
+        const preview = URL.createObjectURL(sliceFile);
+
+        sliceFiles.push({
+          file: sliceFile,
+          parsed: sliceParsed,
+          preview,
+          status: sliceParsed.ok ? 'pending' : 'error',
+          _sliceInfo: { total: totalSlices, index: s+1, originalName: file.name }
+        });
+      }
+
+      bmp.close();
+      this.files.push(...sliceFiles);
+    }
+    // 로딩 표시 원복
+    if (dz) { dz.classList.remove('drag-over'); dz.querySelector('.drop-title').textContent = '파일을 드래그하거나 클릭해서 선택'; }
     this._renderList();
   },
 
@@ -2248,11 +2324,16 @@ const upload = {
       el.dataset.idx = i;
       el.draggable = item.status === 'pending'; // 대기중인 것만 드래그 가능
 
+      const sliceBadge = item._sliceInfo
+        ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#FFF1EC;color:#FF4600;flex-shrink:0">✂ ${item._sliceInfo.index}/${item._sliceInfo.total}</span>`
+        : '';
+
       el.innerHTML = `
         <div class="upload-item-header">
           ${item.status==='pending'?'<span class="upload-drag-handle" title="드래그로 순서 변경">⠿</span>':''}
           <img class="upload-thumb" src="${item.preview}" alt="">
           <span class="upload-filename" title="${esc(item.file.name)}">${esc(item.file.name)}</span>
+          ${sliceBadge}
           <span class="upload-status ${scls}">${stxt}</span>
           ${item.status==='pending'?`<button onclick="upload.removeFile(${i})" style="height:22px;padding:0 8px;background:transparent;border:1px solid var(--line);border-radius:4px;font-size:11px;cursor:pointer;color:var(--error);flex-shrink:0">✕</button>`:''}
         </div>
