@@ -32,7 +32,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .btn-sm{height:28px;padding:0 10px;font-size:11px}
 .page{display:none;flex-direction:column}
 .page.active{display:flex;min-height:calc(100vh - 56px);flex-direction:column}
-.gallery-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0;position:sticky;top:0;z-index:10}
+.gallery-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0;position:sticky;top:0;z-index:10;background:var(--surface)}
 .gallery-body{display:flex;flex:1;overflow:hidden;min-height:0}
 .sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line-alt);overflow-y:auto;padding:8px 0}
 .accordion-item{border-bottom:1px solid var(--line-alt)}
@@ -131,8 +131,39 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .progress-bar{height:3px;background:var(--bg-deep);border-radius:2px;overflow:hidden;margin-top:6px}
 .progress-fill{height:100%;background:var(--primary);border-radius:2px;transition:width .3s}
 #page-admin{padding:0;overflow:hidden}
-.admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0;position:sticky;top:0;z-index:10}
-.admin-body{flex:1;overflow-y:auto;padding:24px;min-height:0}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0}
+.admin-body{flex:1;overflow-y:auto;padding:20px 24px;min-height:0}
+
+/* ── 관리자 갤러리 그리드 ── */
+.admin-gallery{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px}
+.admin-card{position:relative;cursor:pointer;border-radius:var(--r-md);overflow:hidden;background:var(--bg-deep);border:2px solid transparent;transition:border-color .15s, box-shadow .15s}
+.admin-card:hover{border-color:var(--line);box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.admin-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt)}
+.admin-card-thumb{width:100%;aspect-ratio:4/5;overflow:hidden;background:var(--bg-deep)}
+.admin-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.admin-card:hover .admin-card-thumb img{transform:scale(1.03)}
+.admin-card-info{padding:6px 8px;background:var(--surface)}
+.admin-card-co{font-size:10px;font-weight:700;color:var(--label-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-card-id{font-size:9px;font-weight:700;color:var(--primary);font-family:monospace;margin-top:1px}
+.admin-card-check{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.8);background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:2}
+.admin-card-check.checked{background:var(--primary);border-color:var(--primary)}
+.admin-card-check.checked::after{content:'✓';font-size:11px;font-weight:800;color:#fff}
+.admin-card-part-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px}
+
+/* 관리자 편집 모달 */
+.admin-edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:none;align-items:center;justify-content:center}
+.admin-edit-modal.open{display:flex}
+.admin-edit-panel{background:var(--surface);border-radius:var(--r-lg);padding:24px;width:420px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.admin-edit-title{font-size:15px;font-weight:800;margin-bottom:16px;color:var(--label-strong)}
+.admin-edit-field{margin-bottom:12px}
+.admin-edit-label{font-size:11px;font-weight:700;color:var(--label-assist);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.admin-edit-input{width:100%;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--bg);color:var(--label-normal)}
+.admin-edit-input:focus{outline:none;border-color:var(--primary)}
+.admin-edit-select{width:100%;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--bg);color:var(--label-normal);cursor:pointer}
+.admin-edit-select:focus{outline:none;border-color:var(--primary)}
+.admin-edit-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--line-alt)}
+
+/* 테이블 스타일 유지 (숨김용) */
 .admin-table{width:100%;border-collapse:collapse;font-size:13px}
 .admin-table th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--label-assist);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--line-alt);white-space:nowrap}
 .admin-table td{padding:10px 12px;border-bottom:1px solid var(--line-alt);vertical-align:middle}
@@ -171,7 +202,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 
 /* ── Flow 뷰 ────────────────────────────────────────────────── */
 #page-flow{padding:0;overflow:hidden}
-.flow-topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0;flex-wrap:wrap}
+.flow-topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line-alt);flex-shrink:0;flex-wrap:wrap;position:sticky;top:0;z-index:10}
 .flow-selector{display:flex;align-items:center;gap:8px}
 .flow-select{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-md);font-size:13px;font-family:inherit;background:var(--surface);color:var(--label-normal);cursor:pointer;min-width:140px}
 .flow-select:focus{outline:none;border-color:var(--primary)}
@@ -292,7 +323,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 
 <!-- ADMIN -->
 <div class="page" id="page-admin" style="overflow:hidden">
-  <div class="admin-topbar">
+  <div style="position:sticky;top:0;z-index:20;flex-shrink:0">
+  <div class="admin-topbar" style="position:relative">
     <div style="font-size:13px;font-weight:600;">전체 레퍼런스 관리</div>
     <div style="display:flex;gap:8px">
       <button class="btn-ghost" id="bulk-select-all-btn" onclick="admin.toggleSelectAll()" style="display:none">전체선택</button>
@@ -333,8 +365,53 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
     <button class="btn-danger btn-sm" id="bulk-delete-btn" onclick="admin.bulkDelete()" title="선택한 항목 모두 삭제">🗑 일괄 삭제</button>
     <button class="btn-ghost btn-sm" onclick="admin.clearSelection()">취소</button>
   </div>
+  </div><!-- /sticky wrapper -->
   <div class="admin-body">
-    <div id="admin-table-wrap"></div>
+    <div class="admin-gallery" id="admin-gallery-wrap"></div>
+    <!-- 레거시 테이블 (숨김) -->
+    <div style="display:none" id="admin-table-wrap"></div>
+  </div>
+</div>
+
+<!-- 관리자 편집 모달 -->
+<div class="admin-edit-modal" id="admin-edit-modal" onclick="if(event.target===this)adminEdit.close()">
+  <div class="admin-edit-panel">
+    <div class="admin-edit-title">화면 정보 수정</div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">기업명</div>
+      <input class="admin-edit-input" id="ae-co" placeholder="기업명">
+    </div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">화면 ID</div>
+      <input class="admin-edit-input" id="ae-screen-id" disabled style="opacity:.5">
+    </div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">대분류</div>
+      <select class="admin-edit-select" id="ae-major" onchange="adminEdit.onMajorChange()"></select>
+    </div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">중분류</div>
+      <select class="admin-edit-select" id="ae-mid"></select>
+    </div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">소분류</div>
+      <input class="admin-edit-input" id="ae-minor" placeholder="예: 신규청약 (없으면 공란)">
+    </div>
+    <div class="admin-edit-field">
+      <div class="admin-edit-label">보험유형</div>
+      <select class="admin-edit-select" id="ae-ins">
+        <option value="자동차보험">자동차보험</option>
+        <option value="건강보험">건강보험</option>
+        <option value="운전자보험">운전자보험</option>
+        <option value="기타보험">기타보험</option>
+        <option value="공통">공통</option>
+      </select>
+    </div>
+    <div class="admin-edit-footer">
+      <button class="btn-ghost" onclick="adminEdit.close()">취소</button>
+      <button class="btn-danger btn-sm" onclick="adminEdit.deleteScreen()">삭제</button>
+      <button class="btn-primary" onclick="adminEdit.save()">저장</button>
+    </div>
   </div>
 </div>
 
@@ -777,86 +854,70 @@ const render = {
   },
 
   adminTable() {
-    const wrap = document.getElementById('admin-table-wrap');
+    // 갤러리 뷰로 렌더
+    const wrap = document.getElementById('admin-gallery-wrap');
+    if (!wrap) return;
     if (!state.allScreens.length) {
-      wrap.innerHTML = '<div class="empty-admin">등록된 데이터가 없습니다.</div>';
+      wrap.innerHTML = '<div class="empty-admin" style="grid-column:1/-1">등록된 데이터가 없습니다.</div>';
       document.getElementById('bulk-select-all-btn').style.display='none';
       return;
     }
     document.getElementById('bulk-select-all-btn').style.display='';
-
-    // 선택 상태 초기화
-    admin._selected = new Set();
-    admin._updateBulkUI();
-
-    // 대분류 선택지 렌더
     admin._renderBulkMajorOptions();
 
-    const frag = document.createDocumentFragment();
-    const table = document.createElement('table');
-    table.className = 'admin-table';
-    table.innerHTML = `<thead><tr>
-      <th style="width:36px"><input type="checkbox" class="admin-checkbox" id="chk-all" onchange="admin.onSelectAll(this)"></th>
-      <th style="width:40px"></th>
-      <th>기업명</th><th>화면 ID</th><th>대분류</th><th>중분류</th>
-      <th>소분류</th><th>보험유형</th>
-      <th style="width:90px">액션</th>
-    </tr></thead>`;
-    const tbody = document.createElement('tbody');
-
+    wrap.innerHTML = '';
     state.allScreens.forEach(s => {
-      const tr = document.createElement('tr');
-      tr.id = `admin-row-${s.id}`;
+      const card = document.createElement('div');
+      card.className = `admin-card${admin._selected.has(s.id)?' selected':''}`;
+      card.id = `admin-card-${s.id}`;
 
       // 체크박스
-      const tdChk = document.createElement('td');
-      const chk = document.createElement('input');
-      chk.type='checkbox'; chk.className='admin-checkbox'; chk.dataset.id=s.id;
-      chk.onchange = () => admin.onRowCheck(s.id, chk.checked);
-      tdChk.appendChild(chk);
+      const chk = document.createElement('div');
+      chk.className = `admin-card-check${admin._selected.has(s.id)?' checked':''}`;
+      chk.title = '선택';
+      chk.addEventListener('click', e => {
+        e.stopPropagation();
+        const checked = !admin._selected.has(s.id);
+        admin.onRowCheck(s.id, checked);
+        card.classList.toggle('selected', checked);
+        chk.classList.toggle('checked', checked);
+        // 전체선택 체크박스 동기화
+        const chkAll = document.getElementById('chk-all');
+        if(chkAll) chkAll.checked = admin._selected.size === state.allScreens.length;
+      });
 
-      // 썸네일
-      const tdThumb = document.createElement('td');
+      // 썸네일 (4:5 비율)
+      const thumb = document.createElement('div');
+      thumb.className = 'admin-card-thumb';
       const img = document.createElement('img');
-      img.className='thumb-sm'; img.src=s.imgSrc||''; img.alt='';
-      img.onerror=()=>img.style.display='none';
-      tdThumb.appendChild(img);
+      img.src = s.imgSrc||''; img.alt = s.co||''; img.loading='lazy';
+      img.onerror=()=>{ thumb.style.background='var(--bg-deep)'; };
+      thumb.appendChild(img);
 
-      // 기업명 (텍스트 인라인 편집)
-      const tdCo = document.createElement('td');
-      tdCo.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editTextField(${s.id},'co',this)">${esc(s.co||'-')}</span>`;
+      // 파트 배지
+      if (s.partGroup) {
+        const siblings = state.allScreens.filter(x=>x.partGroup===s.partGroup).sort((a,b)=>a.partOrder-b.partOrder);
+        const pb = document.createElement('div'); pb.className='admin-card-part-badge';
+        const idx2 = siblings.findIndex(x=>x.id===s.id)+1;
+        pb.textContent=`${idx2}/${siblings.length}`;
+        card.appendChild(pb);
+      }
 
-      // 화면ID (배지, 읽기전용)
-      const tdId = document.createElement('td');
-      tdId.innerHTML = `<span class="id-badge">${esc(s.screenId||'-')}</span>`;
+      // 하단 정보
+      const info = document.createElement('div');
+      info.className = 'admin-card-info';
+      info.innerHTML = `
+        <div class="admin-card-co">${esc(s.co||'-')}</div>
+        <div class="admin-card-id">${esc(s.screenId||'-')}</div>`;
 
-      // 대분류 (셀렉트)
-      const tdMajor = document.createElement('td');
-      tdMajor.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editSelectField(${s.id},'major',this,'${esc(s.majorCode||'')}')">${esc(s.majorLabel||'-')}</span>`;
+      // 카드 클릭 → 편집 모달
+      card.addEventListener('click', () => adminEdit.open(s.id));
 
-      // 중분류 (셀렉트, 대분류 종속)
-      const tdMid = document.createElement('td');
-      tdMid.innerHTML = `<span class="inline-val" title="클릭해서 수정" onclick="admin.editSelectField(${s.id},'mid',this,'${esc(s.midCode||'')}')">${esc(s.midLabel||'-')}</span>`;
-
-      // 소분류 (텍스트 인라인)
-      const minor = s.minorCode||'';
-      const tdMinor = document.createElement('td');
-      tdMinor.innerHTML = `<span id="minor-val-${s.id}" class="inline-val${!minor?' parse-val empty':''}" title="클릭해서 수정" onclick="admin.editMinorSelect(${s.id},this)">${minor?esc(minor):'(미지정)'}</span>`;
-
-      // 보험유형 (셀렉트)
-      const tdIns = document.createElement('td');
-      tdIns.innerHTML = `<span class="inline-val ins-badge" title="클릭해서 수정" onclick="admin.editInsField(${s.id},this)">${esc(s.insLabel||'-')}</span>`;
-
-      // 액션
-      const tdAct = document.createElement('td');
-      tdAct.innerHTML = `<button class="btn-danger btn-sm" onclick="admin.deleteScreen(${s.id})">삭제</button>`;
-
-      tr.append(tdChk, tdThumb, tdCo, tdId, tdMajor, tdMid, tdMinor, tdIns, tdAct);
-      tbody.appendChild(tr);
+      card.appendChild(chk);
+      card.appendChild(thumb);
+      card.appendChild(info);
+      wrap.appendChild(card);
     });
-    table.appendChild(tbody);
-    wrap.innerHTML='';
-    wrap.appendChild(table);
   },
 };
 
@@ -1246,6 +1307,126 @@ const flowView = {
   },
 };
 
+// ── 관리자 편집 모달 ─────────────────────────────────────────
+const adminEdit = {
+  _id: null,
+
+  open(id) {
+    const s = state.allScreens.find(x=>x.id===id);
+    if (!s) return;
+    this._id = id;
+
+    document.getElementById('ae-co').value        = s.co||'';
+    document.getElementById('ae-screen-id').value = s.screenId||'';
+    document.getElementById('ae-minor').value     = s.minorLabel||s.minorCode||'';
+    document.getElementById('ae-ins').value       = s.insLabel||'자동차보험';
+
+    // 대분류 옵션
+    const majSel = document.getElementById('ae-major');
+    majSel.innerHTML = '<option value="">선택</option>';
+    Object.entries(MAJOR_MAP).forEach(([code, label]) => {
+      const opt = document.createElement('option');
+      opt.value=code; opt.textContent=`${code} ${label}`;
+      if(code===s.majorCode) opt.selected=true;
+      majSel.appendChild(opt);
+    });
+
+    // 중분류 옵션
+    this._renderMid(s.majorCode, s.midCode);
+
+    document.getElementById('admin-edit-modal').classList.add('open');
+  },
+
+  onMajorChange() {
+    const majorCode = document.getElementById('ae-major').value;
+    this._renderMid(majorCode, '');
+  },
+
+  _renderMid(majorCode, selectedMid) {
+    const midSel = document.getElementById('ae-mid');
+    midSel.innerHTML = '<option value="">선택</option>';
+    Object.entries(MID_MAP).forEach(([key, label]) => {
+      if (!majorCode || key.startsWith(majorCode)) {
+        const opt = document.createElement('option');
+        opt.value=key; opt.textContent=`${key} ${label}`;
+        if(key===selectedMid) opt.selected=true;
+        midSel.appendChild(opt);
+      }
+    });
+  },
+
+  async save() {
+    const s = state.allScreens.find(x=>x.id===this._id);
+    if (!s) return;
+
+    const coVal     = document.getElementById('ae-co').value.trim();
+    const majorCode = document.getElementById('ae-major').value;
+    const midCode   = document.getElementById('ae-mid').value;
+    const minorVal  = document.getElementById('ae-minor').value.trim();
+    const insVal    = document.getElementById('ae-ins').value;
+
+    const updates = {};
+    if (coVal !== s.co)                     updates.co = coVal;
+    if (majorCode && majorCode !== s.majorCode) { updates.majorcode = majorCode; updates.majorlabel = MAJOR_MAP[majorCode]||majorCode; }
+    if (midCode && midCode !== s.midCode)       { updates.midcode = midCode; updates.midlabel = MID_MAP[midCode]||midCode; }
+    if (minorVal !== (s.minorLabel||s.minorCode||'')) { updates.minorlabel = minorVal; updates.minorcode = ''; }
+    if (insVal !== s.insLabel)              { updates.inslabel = insVal; updates.inscode = INS_CODE_MAP[insVal]||''; }
+
+    if (!Object.keys(updates).length) { this.close(); return; }
+
+    const btn = document.querySelector('#admin-edit-modal .btn-primary');
+    btn.disabled=true; btn.textContent='저장 중...';
+
+    try {
+      const {error} = await supa.from('screens').update(updates).eq('id', this._id);
+      if(error) throw error;
+
+      // 로컬 반영
+      if(updates.co)         s.co          = updates.co;
+      if(updates.majorcode)  { s.majorCode = updates.majorcode; s.majorLabel = updates.majorlabel; }
+      if(updates.midcode)    { s.midCode   = updates.midcode;   s.midLabel   = updates.midlabel; }
+      if('minorlabel' in updates) { s.minorLabel = updates.minorlabel; s.minorCode = ''; }
+      if(updates.inslabel)   { s.insLabel  = updates.inslabel;  s.insCode    = updates.inscode; }
+
+      // 카드만 갱신 (전체 리렌더 방지)
+      const card = document.getElementById(`admin-card-${this._id}`);
+      if (card) {
+        const info = card.querySelector('.admin-card-info');
+        if (info) info.innerHTML = `<div class="admin-card-co">${esc(s.co||'-')}</div><div class="admin-card-id">${esc(s.screenId||'-')}</div>`;
+      }
+      render.sidebar(); render.gallery();
+      ui.showToast('저장됐습니다.');
+      this.close();
+    } catch(e) {
+      ui.showToast('저장 실패: '+e.message, 4000);
+    } finally {
+      btn.disabled=false; btn.textContent='저장';
+    }
+  },
+
+  async deleteScreen() {
+    if (!this._id) return;
+    const s = state.allScreens.find(x=>x.id===this._id);
+    if (!confirm(`"${s?.co} - ${s?.screenId}" 화면을 삭제하시겠습니까?`)) return;
+
+    try {
+      const {error} = await supa.from('screens').delete().eq('id', this._id);
+      if(error) throw error;
+      state.allScreens = state.allScreens.filter(x=>x.id!==this._id);
+      state.filtered   = state.filtered.filter(x=>x.id!==this._id);
+      admin._selected.delete(this._id);
+      this.close();
+      render.sidebar(); render.gallery(); render.adminTable();
+      ui.showToast('삭제됐습니다.');
+    } catch(e) { ui.showToast('삭제 실패: '+e.message, 4000); }
+  },
+
+  close() {
+    document.getElementById('admin-edit-modal').classList.remove('open');
+    this._id = null;
+  },
+};
+
 document.addEventListener('keydown', e=>{
   if(!document.getElementById('screen-modal').classList.contains('open')) return;
   if(e.key==='Escape') {
@@ -1418,6 +1599,11 @@ const admin = {
   onSelectAll(chk) {
     this._selected.clear();
     if (chk.checked) state.allScreens.forEach(s => this._selected.add(s.id));
+    // 갤러리 카드 체크 UI 동기화
+    document.querySelectorAll('.admin-card').forEach(card => {
+      card.classList.toggle('selected', chk.checked);
+      card.querySelector('.admin-card-check')?.classList.toggle('checked', chk.checked);
+    });
     document.querySelectorAll('.admin-checkbox[data-id]').forEach(c => c.checked = chk.checked);
     this._updateBulkUI();
   },
@@ -1429,6 +1615,10 @@ const admin = {
 
   clearSelection() {
     this._selected.clear();
+    document.querySelectorAll('.admin-card').forEach(card => {
+      card.classList.remove('selected');
+      card.querySelector('.admin-card-check')?.classList.remove('checked');
+    });
     document.querySelectorAll('.admin-checkbox').forEach(c => c.checked = false);
     this._updateBulkUI();
   },
