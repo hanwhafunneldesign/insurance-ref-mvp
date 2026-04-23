@@ -717,23 +717,7 @@ const render = {
         body.appendChild(midEl);
 
         // 소분류 (중분류 선택 시 표시)
-        if (isActiveMid) {
-          const minors = [...new Set(midScreens.map(s=>s.minorLabel||'').filter(Boolean))];
-          minors.forEach(mnLbl => {
-            const mnScreens = midScreens.filter(s=>s.minorLabel===mnLbl);
-            const isActiveMn = state.activeMinor === mnLbl;
-            const mnEl = document.createElement('div');
-            mnEl.className = `accordion-sub-item accordion-minor-item${isActiveMn?' active':''}`;
-            mnEl.innerHTML = `<span>${esc(mnLbl)}</span><span class="filter-count" style="font-size:10px">${mnScreens.length}</span>`;
-            mnEl.addEventListener('click', e => {
-              e.stopPropagation();
-              state.activeMinor = isActiveMn ? 'all' : mnLbl;
-              filter._apply();
-              render.sidebar();
-            });
-            body.appendChild(mnEl);
-          });
-        }
+        // 소분류는 사이드바에 표시하지 않음 (Flow 뷰 전용)
       });
 
       item.appendChild(header);
@@ -1956,7 +1940,7 @@ const upload = {
 
 // ── AI 할당량 관리 ───────────────────────────────────────────
 const QUOTA = {
-  DAILY_LIMIT: 500, // 하루 최대 분석 횟수 (유료 플랜 기준)
+  DAILY_LIMIT: 45, // 하루 최대 분석 횟수 (무료 50회에서 여유분 제외)
   KEY: 'ai_quota',
 
   // 오늘 날짜 키 (YYYY-MM-DD)
@@ -2132,7 +2116,18 @@ const ai = {
       console.error('[AI] 검수 실패:', err);
       lvl.innerHTML='';
 
-      dsc.textContent = `분석 실패: ${err.message}`;
+      // 할당량 초과 오류 감지
+      const isQuotaErr = err.message.includes('quota') || err.message.includes('Quota') || err.message.includes('exceeded') || err.message.includes('RESOURCE_EXHAUSTED');
+      if (isQuotaErr) {
+        // 강제로 한도 소진 처리
+        const data = QUOTA.get();
+        data.count = QUOTA.DAILY_LIMIT;
+        localStorage.setItem(QUOTA.KEY, JSON.stringify(data));
+        QUOTA.updateUI();
+        dsc.textContent = 'API 할당량이 소진됐습니다. 내일 다시 시도해주세요.';
+      } else {
+        dsc.textContent = `분석 실패: ${err.message}`;
+      }
       dsc.style.color='rgba(255,100,100,0.8)';
     } finally {
       // 할당량 소진 상태면 버튼 유지 비활성화
