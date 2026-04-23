@@ -135,14 +135,15 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .admin-body{flex:1;overflow-y:auto;padding:20px 24px;min-height:0;height:0}
 
 /* ── 관리자 갤러리 그리드 ── */
-.admin-gallery{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px}
+.admin-gallery{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:16px}
 .admin-card{position:relative;cursor:pointer;border-radius:var(--r-md);overflow:hidden;background:var(--bg-deep);border:2px solid transparent;transition:border-color .15s, box-shadow .15s}
 .admin-card:hover{border-color:var(--line);box-shadow:0 2px 12px rgba(0,0,0,.15)}
 .admin-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt)}
 .admin-card-thumb{width:100%;aspect-ratio:4/5;overflow:hidden;background:var(--bg-deep)}
 .admin-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
 .admin-card:hover .admin-card-thumb img{transform:scale(1.03)}
-.admin-card-info{padding:6px 8px;background:var(--surface)}
+.admin-card-info{padding:6px 8px;background:var(--surface);transition:background .15s}
+.admin-card-info:hover{background:var(--primary-alt)}
 .admin-card-co{font-size:10px;font-weight:700;color:var(--label-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .admin-card-id{font-size:9px;font-weight:700;color:var(--primary);font-family:monospace;margin-top:1px}
 .admin-card-check{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.8);background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:2}
@@ -1110,28 +1111,31 @@ const render = {
       card.className = `admin-card${admin._selected.has(s.id)?' selected':''}`;
       card.id = `admin-card-${s.id}`;
 
-      // 체크박스
+      // 체크박스 (좌상단 시각 인디케이터)
       const chk = document.createElement('div');
       chk.className = `admin-card-check${admin._selected.has(s.id)?' checked':''}`;
       chk.title = '선택';
-      chk.addEventListener('click', e => {
+
+      function toggleCheck(e) {
         e.stopPropagation();
         const checked = !admin._selected.has(s.id);
         admin.onRowCheck(s.id, checked);
         card.classList.toggle('selected', checked);
         chk.classList.toggle('checked', checked);
-        // 전체선택 체크박스 동기화
         const chkAll = document.getElementById('chk-all');
         if(chkAll) chkAll.checked = admin._selected.size === state.allScreens.length;
-      });
+      }
+      chk.addEventListener('click', toggleCheck);
 
-      // 썸네일 (4:5 비율)
+      // 썸네일 — 클릭 전체 영역이 체크 토글
       const thumb = document.createElement('div');
       thumb.className = 'admin-card-thumb';
+      thumb.style.cursor = 'pointer';
       const img = document.createElement('img');
       img.src = s.imgSrc||''; img.alt = s.co||''; img.loading='lazy';
       img.onerror=()=>{ thumb.style.background='var(--bg-deep)'; };
       thumb.appendChild(img);
+      thumb.addEventListener('click', toggleCheck);
 
       // 파트 배지
       if (s.partGroup) {
@@ -1142,14 +1146,24 @@ const render = {
         card.appendChild(pb);
       }
 
-      // 하단 정보
+      // 하단 정보 — 클릭 시 라이트박스(상세화면)
       const info = document.createElement('div');
       info.className = 'admin-card-info';
+      info.style.cursor = 'pointer';
+      info.title = '상세 보기';
       info.innerHTML = `
         <div class="admin-card-co">${esc(s.co||'-')}</div>
         <div class="admin-card-id">${esc(s.screenId||'-')}</div>`;
+      info.addEventListener('click', e => {
+        e.stopPropagation();
+        const idx = state.allScreens.findIndex(x => x.id === s.id);
+        if (idx === -1) return;
+        state.filtered = [...state.allScreens];
+        state.curIdx = idx;
+        lightbox.open(idx);
+      });
 
-      // 카드 클릭 → 편집 모달
+      // 카드 자체 클릭(썸네일·정보 외 여백) → 편집 모달
       card.addEventListener('click', () => adminEdit.open(s.id));
 
       card.appendChild(chk);
