@@ -181,6 +181,102 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--label-strong);color:#fff;padding:10px 20px;border-radius:var(--r-full);font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ── 반응형 ─────────────────────────────────────────────────── */
+
+/* 1100~1399px */
+@media (max-width:1399px){
+  .card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .admin-gallery{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .flow-lane{grid-template-columns:repeat(6,1fr)}
+}
+
+/* 768~1099px */
+@media (max-width:1099px){
+  .card-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .admin-gallery{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+  .flow-lane{grid-template-columns:repeat(4,1fr);gap:8px}
+  .sidebar{width:180px}
+  .accordion-header{font-size:11px;padding:8px 12px}
+  .accordion-sub-item{padding:4px 12px 4px 22px;font-size:11px}
+  .nav{padding:0 16px}
+  .flow-group-title{font-size:18px}
+  .flow-group-subtitle{font-size:15px}
+  .gallery-topbar,.flow-topbar,.admin-topbar{padding:8px 16px}
+  .bulk-field-group{flex-wrap:wrap}
+  .bulk-select,.bulk-input{min-width:90px;font-size:11px}
+}
+
+/* ~767px (모바일) */
+@media (max-width:767px){
+  /* 사이드바 숨김 → 상단 필터 버튼으로 대체 */
+  .sidebar{display:none}
+  .gallery-body{flex-direction:column}
+  .gallery-content{padding:12px}
+
+  /* 그리드 */
+  .card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .admin-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .flow-lane{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  /* Nav */
+  .nav{padding:0 12px;height:48px}
+  .logo{font-size:16px}
+  .seg-ctrl{gap:2px}
+  .seg-btn{padding:0 8px;font-size:11px;height:28px}
+  .btn-primary{padding:0 10px;font-size:12px;height:32px}
+
+  /* 상단바 */
+  .gallery-topbar,.flow-topbar{padding:8px 12px;flex-wrap:wrap;gap:6px}
+  .admin-topbar{padding:8px 12px;flex-wrap:wrap;gap:6px}
+
+  /* 툴바 */
+  .bulk-toolbar{flex-wrap:wrap;gap:6px;padding:8px 12px}
+  .bulk-field-group{width:100%}
+  .bulk-select,.bulk-input{flex:1;min-width:80px;font-size:11px}
+
+  /* 플로우 */
+  .flow-group-title{font-size:16px}
+  .flow-group-subtitle{font-size:13px}
+  .flow-body{padding:14px}
+  .flow-group{margin-bottom:28px}
+
+  /* 관리자 카드 */
+  .admin-card-co{font-size:9px}
+  .admin-card-id{font-size:8px}
+  .admin-card-info{padding:4px 5px}
+
+  /* 라이트박스 */
+  .lb-body{flex-direction:column;gap:0;padding:0;overflow-y:auto}
+  .lb-preview-wrap{height:55vh;width:100%;aspect-ratio:auto;border-radius:0;flex-shrink:0}
+  .lb-panel{width:100%;max-height:45vh;overflow-y:auto;border-radius:0;padding:14px}
+  .lb-header{padding:0 12px}
+  #sm-title{font-size:13px}
+
+  /* 업로드 모달 */
+  .modal-box{width:95vw;max-height:95vh}
+  .parse-grid{grid-template-columns:1fr 1fr}
+
+  /* 페이지 높이 */
+  .page.active{height:calc(100vh - 48px)}
+}
+
+/* ~479px (소형 모바일) */
+@media (max-width:479px){
+  .card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .admin-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .flow-lane{grid-template-columns:repeat(2,1fr);gap:6px}
+  .seg-ctrl{gap:1px}
+  .seg-btn{padding:0 6px;font-size:10px;height:26px}
+  .logo{font-size:14px}
+  .gallery-content{padding:8px}
+  .flow-body{padding:10px}
+  .admin-body{padding:8px}
+  .gallery-topbar,.flow-topbar{padding:6px 10px}
+  .lb-preview-wrap{height:50vh}
+  .lb-panel{max-height:50vh;padding:10px}
+  .admin-edit-panel{width:95vw;padding:16px}
+}
+
 /* ── 관리자 체크박스 & 툴바 ─────────────────────────────── */
 .admin-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--primary)}
 .bulk-toolbar{display:none;align-items:center;gap:10px;padding:10px 16px;background:var(--primary-alt);border-bottom:1px solid var(--primary);flex-shrink:0}
@@ -259,6 +355,114 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .lb-field-select{width:100%;height:30px;padding:0 10px;background:rgba(30,30,40,.9);border:1px solid rgba(255,255,255,.15);border-radius:var(--r-sm);color:#fff;font-size:13px;font-family:inherit;cursor:pointer}
 .lb-field-select:focus{outline:none;border-color:var(--primary)}
 .lb-field-select option{background:#1a1a2e;color:#fff}
+
+/* ═══════════════════════════════════════════════════════════
+   반응형 미디어쿼리
+═══════════════════════════════════════════════════════════ */
+
+/* ── 1200px 이하: 넓은 태블릿 ─────────────────────────────── */
+@media (max-width:1200px) {
+  .card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .admin-gallery{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .flow-lane{grid-template-columns:repeat(6,1fr)}
+  .lb-panel{width:240px}
+}
+
+/* ── 900px 이하: 태블릿 ───────────────────────────────────── */
+@media (max-width:900px) {
+  /* Nav 축약 */
+  .nav{padding:0 16px}
+  .seg-btn{padding:6px 10px;font-size:12px}
+  .logo{font-size:17px}
+
+  /* 갤러리: 사이드바 숨기고 토글 버튼 표시 */
+  .sidebar{
+    position:fixed;left:0;top:56px;bottom:0;z-index:100;
+    transform:translateX(-100%);transition:transform .25s;
+    box-shadow:4px 0 20px rgba(0,0,0,.15)
+  }
+  .sidebar.mobile-open{transform:translateX(0)}
+  .sidebar-toggle-btn{display:flex !important}
+  .gallery-content{padding:16px}
+
+  /* Flow 4열 */
+  .flow-lane{grid-template-columns:repeat(4,1fr)}
+
+  /* 관리자 5열 */
+  .admin-gallery{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+  /* 라이트박스: 패널을 하단으로 */
+  .lb-body{flex-direction:column;gap:12px;padding:12px 16px;overflow-y:auto;align-items:stretch}
+  .lb-preview-wrap{height:50vh;aspect-ratio:unset;width:100%;flex-shrink:0}
+  .lb-panel{width:100%;height:auto;overflow-y:visible;flex-shrink:0}
+  .lb-header{padding:12px 16px}
+
+  /* 업로드 모달 */
+  .modal-box{width:95vw}
+  .parse-grid{grid-template-columns:1fr 1fr}
+}
+
+/* ── 600px 이하: 모바일 ───────────────────────────────────── */
+@media (max-width:600px) {
+  /* Nav */
+  .nav{padding:0 12px;gap:8px}
+  .seg-btn{padding:5px 8px;font-size:11px}
+  .logo{font-size:15px}
+  .btn-primary{height:32px;padding:0 12px;font-size:12px}
+
+  /* 갤러리 2열 */
+  .card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .gallery-topbar{padding:8px 12px;gap:8px;flex-wrap:wrap}
+  .gallery-content{padding:12px}
+
+  /* Flow 2열 */
+  .flow-lane{grid-template-columns:repeat(2,1fr)}
+  .flow-topbar{padding:8px 12px;gap:8px}
+  .flow-group-title{font-size:17px}
+  .flow-group-subtitle{font-size:14px}
+
+  /* 관리자 3열 */
+  .admin-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .admin-topbar{padding:10px 12px;flex-wrap:wrap;gap:6px}
+  .bulk-toolbar{padding:8px 12px;flex-wrap:wrap;gap:6px}
+  .bulk-field-group{flex-wrap:wrap}
+  .bulk-select{min-width:90px;font-size:11px}
+  .bulk-input{width:90px}
+  .admin-body{padding:12px}
+
+  /* 라이트박스 */
+  .lb-body{padding:10px 12px}
+  .lb-preview-wrap{height:45vh}
+  .lb-header{padding:10px 12px;gap:8px}
+  .lb-nav-btn{width:28px;height:28px;font-size:12px}
+
+  /* 편집 모달 */
+  .admin-edit-panel{padding:16px;width:95vw}
+  .modal-box{max-height:95vh}
+  .parse-grid{grid-template-columns:1fr}
+
+  /* 업로드 모달 */
+  .drop-zone{padding:24px}
+}
+
+/* ── 사이드바 토글 버튼: 기본 숨김, 태블릿에서 표시 ────────── */
+.sidebar-toggle-btn{
+  display:none;
+  height:32px;padding:0 10px;
+  background:transparent;color:var(--label-alt);
+  border:1px solid var(--line);border-radius:var(--r-md);
+  font-size:12px;font-weight:600;cursor:pointer;
+  align-items:center;gap:4px;white-space:nowrap
+}
+.sidebar-toggle-btn:hover{background:var(--bg-deep)}
+
+/* ── 사이드바 오버레이 (모바일 열렸을 때 배경) ──────────────── */
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.3);z-index:99;
+  top:56px
+}
+.sidebar-overlay.visible{display:block}
 </style>
 </head>
 <body>
@@ -276,9 +480,14 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 <!-- GALLERY -->
 <div class="page" id="page-gallery" style="padding:0">
   <div class="gallery-topbar">
-    <div style="font-size:13px;font-weight:600;">보험 서비스 UX 레퍼런스</div>
-    <div id="results-info" style="font-size:12px;color:var(--label-assist)"></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="ui.toggleSidebar()">☰ 분류</button>
+      <div style="font-size:13px;font-weight:600;">보험 서비스 UX 레퍼런스</div>
+      <div id="results-info" style="font-size:12px;color:var(--label-assist)"></div>
+    </div>
+    <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
   </div>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="ui.closeSidebar()"></div>
   <div class="gallery-body">
     <aside class="sidebar" id="sidebar">
       <!-- 기업명/보험유형: 숨김 처리 -->
@@ -683,9 +892,38 @@ function esc(s) { const d=document.createElement('div'); d.textContent=String(s|
 
 const ui = {
   _t: null,
+  toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebar-overlay');
+    const isOpen = sb.classList.toggle('mobile-open');
+    ov?.classList.toggle('visible', isOpen);
+  },
+  closeSidebar() {
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay')?.classList.remove('visible');
+  },
   showToast(msg, dur=2500) {
     const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
     clearTimeout(this._t); this._t=setTimeout(()=>t.classList.remove('show'), dur);
+  },
+
+  toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    if (!sb) return;
+    const hidden = sb.style.display === 'none' || (!sb.style.display && window.innerWidth <= 767);
+    sb.style.display = hidden ? 'block' : 'none';
+  },
+
+  _initResponsive() {
+    const check = () => {
+      const mobile = window.innerWidth <= 767;
+      const btn = document.getElementById('sidebar-toggle-btn');
+      if (btn) btn.style.display = mobile ? 'block' : 'none';
+      const sb = document.getElementById('sidebar');
+      if (sb && !mobile) sb.style.display = ''; // 데스크톱 복원
+    };
+    check();
+    window.addEventListener('resize', check);
   },
 };
 
@@ -930,7 +1168,10 @@ const filter = {
     if (state.activeCat   !== 'all') b = b.filter(s=>s.majorLabel===state.activeCat);
     if (state.activeMid   !== 'all') b = b.filter(s=>s.midLabel===state.activeMid);
     if (state.activeMinor !== 'all') b = b.filter(s=>s.minorLabel===state.activeMinor);
-    state.filtered = b; render.gallery();
+    state.filtered = b;
+    render.gallery();
+    // 모바일(900px 이하)에서 필터 선택 후 자동으로 사이드바 닫기
+    if (window.innerWidth <= 900) ui.closeSidebar();
   },
   setCo(v)    { state.activeCo=v; state.activeIns='all'; state.activeCat='all'; state.activeMid='all'; state.activeMinor='all'; render.sidebar(); this._apply(); },
   setIns(v)   { state.activeIns=v; state.activeCat='all'; state.activeMid='all'; state.activeMinor='all'; render.sidebar(); this._apply(); },
@@ -1428,12 +1669,16 @@ const adminEdit = {
 };
 
 document.addEventListener('keydown', e=>{
+  // 관리자 편집 모달 닫기
+  if(e.key==='Escape' && document.getElementById('admin-edit-modal')?.classList.contains('open')) {
+    adminEdit.close(); return;
+  }
   if(!document.getElementById('screen-modal').classList.contains('open')) return;
   if(e.key==='Escape') {
     if(lbEdit._editing) { lbEdit.cancel(); return; }
     lightbox.close();
   }
-  if(lbEdit._editing) return; // 편집 중엔 화살표 네비 막기
+  if(lbEdit._editing) return;
   if(e.key==='ArrowLeft')  lightbox.navigate(-1);
   if(e.key==='ArrowRight') lightbox.navigate(1);
 });
@@ -2383,6 +2628,7 @@ async function init() {
   }));
   state.filtered = [...state.allScreens];
   render.sidebar(); render.gallery(); flowView.init();
+  ui._initResponsive();
 }
 init();
 </script>
