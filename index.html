@@ -135,21 +135,51 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .admin-body{flex:1;overflow-y:auto;padding:20px 24px;min-height:0;height:0}
 
 /* ── 관리자 갤러리 그리드 ── */
-.admin-gallery{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:16px}
+.admin-gallery{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
 .admin-card{position:relative;cursor:pointer;border-radius:var(--r-md);overflow:hidden;background:var(--bg-deep);border:2px solid transparent;transition:border-color .15s, box-shadow .15s}
 .admin-card:hover{border-color:var(--line);box-shadow:0 2px 12px rgba(0,0,0,.15)}
 .admin-card.selected{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-alt)}
-.admin-card-thumb{width:100%;aspect-ratio:4/5;overflow:hidden;background:var(--bg-deep)}
+.admin-card-thumb{width:100%;aspect-ratio:1/1.7;overflow:hidden;background:var(--bg-deep)}
 .admin-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
 .admin-card:hover .admin-card-thumb img{transform:scale(1.03)}
 .admin-card-info{padding:6px 8px;background:var(--surface);transition:background .15s}
 .admin-card-info:hover{background:var(--primary-alt)}
 .admin-card-co{font-size:10px;font-weight:700;color:var(--label-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .admin-card-id{font-size:9px;font-weight:700;color:var(--primary);font-family:monospace;margin-top:1px}
+.admin-card-date{font-size:9px;color:var(--label-assist);margin-top:2px}
 .admin-card-check{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:4px;border:2px solid rgba(255,255,255,.8);background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:2}
 .admin-card-check.checked{background:var(--primary);border-color:var(--primary)}
 .admin-card-check.checked::after{content:'✓';font-size:11px;font-weight:800;color:#fff}
 .admin-card-part-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px}
+
+/* ── 액션 버튼 통일 ── */
+.bulk-apply-btn{height:36px;padding:0 14px;background:var(--label-normal);color:#fff;border:none;border-radius:var(--r-md);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.bulk-apply-btn:hover{background:#333}
+.btn-group{height:36px;padding:0 14px;background:#555;color:#fff;border:none;border-radius:var(--r-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.btn-group:hover{background:#444}
+.btn-ghost{height:36px;padding:0 14px;background:var(--bg-deep);color:var(--label-alt);border:none;border-radius:var(--r-md);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.btn-ghost:hover{background:#ddd}
+.btn-danger{height:36px;padding:0 14px;background:var(--error);color:#fff;border:none;border-radius:var(--r-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.btn-danger:hover{background:#e03030}
+.btn-sm{height:36px;padding:0 14px;font-size:12px}
+
+.admin-subtab-ctrl{display:flex;gap:2px;background:var(--bg-deep);border-radius:var(--r-md);padding:3px}
+.admin-subtab{height:30px;padding:0 16px;border:none;background:transparent;border-radius:6px;font-size:13px;font-weight:500;color:var(--label-assist);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.admin-subtab.active{background:var(--surface);color:var(--label-normal);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.co-url-section{background:var(--surface);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;border:1px solid var(--line-alt)}
+.co-url-title{font-size:13px;font-weight:800;color:var(--label-strong);margin-bottom:14px}
+.co-url-table{width:100%;border-collapse:collapse;font-size:12px}
+.co-url-table th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--label-assist);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--line-alt);white-space:nowrap}
+.co-url-table td{padding:8px 10px;border-bottom:1px solid var(--line-alt);vertical-align:middle}
+.co-url-table tr:last-child td{border-bottom:none}
+.co-url-input{width:100%;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--bg);color:var(--label-normal)}
+.co-url-input:focus{outline:none;border-color:var(--primary)}
+.co-url-save-btn{height:30px;padding:0 12px;background:var(--label-normal);color:#fff;border:none;border-radius:var(--r-sm);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.co-url-save-btn:hover{background:#333}
+.co-url-del-btn{height:30px;padding:0 10px;background:var(--error);color:#fff;border:none;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.co-url-del-btn:hover{background:#e03030}
+.lb-url-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-md);font-size:11px;font-weight:600;text-decoration:none;cursor:pointer;transition:background .15s;margin-top:4px;width:100%}
+.lb-url-btn:hover{background:rgba(255,255,255,.18)}
 
 /* 관리자 편집 모달 */
 .admin-edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:none;align-items:center;justify-content:center}
@@ -187,14 +217,14 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 /* 1100~1399px */
 @media (max-width:1399px){
   .card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .admin-gallery{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .admin-gallery{grid-template-columns:repeat(5,minmax(0,1fr))}
   .flow-lane{grid-template-columns:repeat(6,1fr)}
 }
 
 /* 768~1099px */
 @media (max-width:1099px){
   .card-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  .admin-gallery{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+  .admin-gallery{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
   .flow-lane{grid-template-columns:repeat(4,1fr);gap:8px}
   .sidebar{width:180px}
   .accordion-header{font-size:11px;padding:8px 12px}
@@ -217,7 +247,6 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
   /* 그리드 */
   .card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .admin-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-  .flow-lane{grid-template-columns:repeat(2,1fr);gap:8px}
 
   /* Nav */
   .nav{padding:0 12px;height:48px}
@@ -514,16 +543,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
       <select class="flow-select" id="flow-co-select" onchange="flowView.onFilter()">
         <option value="">전체 기업</option>
       </select>
-      <select class="flow-select" id="flow-ins-select" onchange="flowView.onFilter()">
-        <option value="">전체 보험유형</option>
-        <option value="자동차보험">자동차보험</option>
-        <option value="건강보험">건강보험</option>
-        <option value="운전자보험">운전자보험</option>
-        <option value="기타보험">기타보험</option>
-        <option value="공통">공통</option>
-      </select>
       <select class="flow-select" id="flow-minor-select" onchange="flowView.onFilter()" style="display:none">
-        <option value="">전체 소분류</option>
+        <option value="">전체 상세</option>
       </select>
     </div>
     <div class="flow-edit-hint" id="flow-edit-hint">✦ 카드를 드래그해서 순서를 바꿀 수 있어요</div>
@@ -538,13 +559,17 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 <div class="page" id="page-admin">
   <div style="flex-shrink:0;">
   <div class="admin-topbar">
-    <div style="font-size:13px;font-weight:600;">전체 레퍼런스 관리</div>
-    <div style="display:flex;gap:8px">
+    <!-- 서브탭 -->
+    <div class="admin-subtab-ctrl">
+      <button class="admin-subtab active" id="subtab-screens" onclick="adminSubtab.show('screens')">스크린 관리</button>
+      <button class="admin-subtab" id="subtab-urls" onclick="adminSubtab.show('urls')">URL 관리</button>
+    </div>
+    <div id="admin-topbar-actions" style="display:flex;gap:8px">
       <button class="btn-ghost" id="bulk-select-all-btn" onclick="admin.toggleSelectAll()" style="display:none">전체선택</button>
       <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
     </div>
   </div>
-  <!-- 일괄 수정 툴바 -->
+  <!-- 일괄 수정 툴바 (스크린 관리 탭에서만) -->
   <div class="bulk-toolbar" id="bulk-toolbar">
     <span class="bulk-count" id="bulk-count">0개 선택</span>
     <div class="bulk-field-group">
@@ -556,12 +581,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
         <option value="">중분류 변경</option>
       </select>
       <select class="bulk-select" id="bulk-minor" style="min-width:120px">
-        <option value="">소분류 변경</option>
-        <option value="">─────</option>
-        <option value="S01">S01 브랜드가입</option>
-        <option value="S02">S02 청약</option>
-        <option value="S03">S03 배서</option>
-        <option value="__CLEAR__">(소분류 제거)</option>
+        <option value="">상세 변경</option>
+        <option value="__CLEAR__">(상세 제거)</option>
       </select>
       <select class="bulk-select" id="bulk-ins">
         <option value="">보험유형 변경</option>
@@ -580,9 +601,21 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
   </div>
   </div><!-- /sticky wrapper -->
   <div class="admin-body">
-    <div class="admin-gallery" id="admin-gallery-wrap"></div>
-    <!-- 레거시 테이블 (숨김) -->
-    <div style="display:none" id="admin-table-wrap"></div>
+    <!-- 서브탭: 스크린 관리 -->
+    <div id="admin-panel-screens">
+      <div class="admin-gallery" id="admin-gallery-wrap"></div>
+      <div style="display:none" id="admin-table-wrap"></div>
+    </div>
+    <!-- 서브탭: URL 관리 -->
+    <div id="admin-panel-urls" style="display:none">
+      <div class="co-url-section">
+        <div class="co-url-title">🔗 기업 URL 관리</div>
+        <table class="co-url-table" id="co-url-table">
+          <thead><tr><th style="width:160px">기업명</th><th style="width:140px">라벨</th><th>URL</th><th style="width:100px"></th></tr></thead>
+          <tbody id="co-url-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -607,7 +640,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
       <select class="admin-edit-select" id="ae-mid"></select>
     </div>
     <div class="admin-edit-field">
-      <div class="admin-edit-label">소분류</div>
+      <div class="admin-edit-label">상세</div>
       <input class="admin-edit-input" id="ae-minor" placeholder="예: 신규청약 (없으면 공란)">
     </div>
     <div class="admin-edit-field">
@@ -661,8 +694,13 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
         <div class="lb-info-item"><span class="lb-info-lbl">화면 ID</span><span class="lb-info-val mono" id="sm-screen-id">-</span></div>
         <div class="lb-info-item"><span class="lb-info-lbl">대분류</span><span class="lb-info-val" id="sm-major">-</span></div>
         <div class="lb-info-item"><span class="lb-info-lbl">중분류</span><span class="lb-info-val" id="sm-mid">-</span></div>
-        <div class="lb-info-item"><span class="lb-info-lbl">소분류</span><span class="lb-info-val" id="sm-minor">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">상세</span><span class="lb-info-val" id="sm-minor">-</span></div>
         <div class="lb-info-item"><span class="lb-info-lbl">보험유형</span><span class="lb-info-val" id="sm-ins">-</span></div>
+        <div class="lb-info-item"><span class="lb-info-lbl">업로드일</span><span class="lb-info-val" id="sm-uploaded-at" style="font-size:11px;color:rgba(255,255,255,.5)">-</span></div>
+        <div id="sm-url-section" style="display:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div class="lb-info-lbl" style="margin-bottom:6px">사이트 링크</div>
+          <a id="sm-url-link" class="lb-url-btn" href="#" target="_blank" rel="noopener">🔗 <span id="sm-url-label">바로가기</span></a>
+        </div>
       </div>
       <!-- 편집 모드 -->
       <div id="lb-edit-mode" style="display:none">
@@ -683,7 +721,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
           <select class="lb-field-select" id="lb-edit-mid"></select>
         </div>
         <div class="lb-field-edit">
-          <span class="lb-info-lbl">소분류</span>
+          <span class="lb-info-lbl">상세</span>
           <select class="lb-field-select" id="lb-edit-minor">
             <option value="">(없음)</option>
           </select>
@@ -939,8 +977,9 @@ const render = {
     document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
     document.getElementById('page-'+n)?.classList.add('active');
     document.getElementById('nav-'+n)?.classList.add('active');
-    if (n === 'admin') render.adminTable();
+    if (n === 'admin') { render.adminTable(); coUrlManager.renderTable(); }
     if (n === 'flow')  flowView.init();
+    sessionStorage.setItem('activeTab', n);
   },
 
   sidebar() {
@@ -1109,7 +1148,9 @@ const render = {
     admin._renderBulkMajorOptions();
 
     wrap.innerHTML = '';
-    state.allScreens.forEach(s => {
+    // [7] 최신순 정렬 (id 내림차순)
+    const sorted = [...state.allScreens].sort((a,b) => (b.id||0) - (a.id||0));
+    sorted.forEach(s => {
       const card = document.createElement('div');
       card.className = `admin-card${admin._selected.has(s.id)?' selected':''}`;
       card.id = `admin-card-${s.id}`;
@@ -1154,9 +1195,11 @@ const render = {
       info.className = 'admin-card-info';
       info.style.cursor = 'pointer';
       info.title = '상세 보기';
+      const uploadedStr = (s.uploadedAt || s.uploaded_at || s.created_at || '').slice(0,10).replace(/-/g,'.');
       info.innerHTML = `
         <div class="admin-card-co">${esc(s.co||'-')}</div>
-        <div class="admin-card-id">${esc(s.screenId||'-')}</div>`;
+        <div class="admin-card-id">${esc(s.screenId||'-')}</div>
+        ${uploadedStr ? `<div class="admin-card-date">${esc(uploadedStr)}</div>` : ''}`;
       info.addEventListener('click', e => {
         e.stopPropagation();
         const idx = state.allScreens.findIndex(x => x.id === s.id);
@@ -1244,8 +1287,25 @@ const lightbox = {
     document.getElementById('sm-screen-id').textContent= s.screenId||'-';
     document.getElementById('sm-major').textContent    = s.majorLabel||'-';
     document.getElementById('sm-mid').textContent      = s.midLabel||'-';
-    document.getElementById('sm-minor').textContent    = s.minorLabel || s.minorCode || '(미지정)';
+    // 상세: minorLabel 우선, S0x 코드는 표시 안 함
+    const minorDisp = s.minorLabel || '';
+    document.getElementById('sm-minor').textContent = minorDisp || '(미지정)';
     document.getElementById('sm-ins').textContent      = s.insLabel||'-';
+    // 업로드일자
+    const uploadedAt = s.uploadedAt || s.uploaded_at || s.created_at || '';
+    document.getElementById('sm-uploaded-at').textContent = uploadedAt ? uploadedAt.slice(0,10).replace(/-/g,'.') : '-';
+    // 기업 URL
+    const urlData = coUrlManager.get(s.co);
+    const urlSec  = document.getElementById('sm-url-section');
+    const urlLink = document.getElementById('sm-url-link');
+    const urlLbl  = document.getElementById('sm-url-label');
+    if (urlData && urlData.url) {
+      urlLink.href = urlData.url;
+      urlLbl.textContent = urlData.label || '바로가기';
+      urlSec.style.display = '';
+    } else {
+      urlSec.style.display = 'none';
+    }
     const wrap=document.getElementById('sm-preview-wrap'); wrap.innerHTML='';
     const img=document.createElement('img'); img.src=s.imgSrc||''; img.alt=s.co||'';
     img.style.cssText='width:100%;height:100%;object-fit:contain;display:block';
@@ -1305,27 +1365,26 @@ const flowView = {
   _populateCoSelect() {
     const sel = document.getElementById('flow-co-select');
     const cur = sel.value;
-    const cos = ['', ...new Set(state.allScreens.map(s=>s.co).filter(Boolean).sort())];
-    sel.innerHTML = cos.map(c => `<option value="${esc(c)}"${c===cur?' selected':''}>${c||'전체 기업'}</option>`).join('');
+    const cos = [...new Set(state.allScreens.map(s=>s.co).filter(Boolean))]
+      .sort((a,b) => a.localeCompare(b, 'ko'));
+    sel.innerHTML = `<option value="">전체 기업</option>` +
+      cos.map(c => `<option value="${esc(c)}"${c===cur?' selected':''}>${esc(c)}</option>`).join('');
   },
 
   onFilter() { this._populateMinorSelect(); this.render(); },
 
   _populateMinorSelect() {
-    const coVal  = document.getElementById('flow-co-select').value;
-    const insVal = document.getElementById('flow-ins-select').value;
-    const sel    = document.getElementById('flow-minor-select');
+    const coVal = document.getElementById('flow-co-select').value;
+    const sel   = document.getElementById('flow-minor-select');
     const curVal = sel.value;
 
-    // 현재 필터 기준으로 소분류 목록 추출
     let base = state.allScreens;
-    if (coVal)  base = base.filter(s => s.co === coVal);
-    if (insVal) base = base.filter(s => s.insLabel === insVal);
+    if (coVal) base = base.filter(s => s.co === coVal);
 
-    const minors = [...new Set(base.map(s => s.minorLabel||'').filter(Boolean))].sort();
+    const minors = [...new Set(base.map(s => s.minorLabel||'').filter(Boolean))]
+      .sort((a,b) => a.localeCompare(b, 'ko'));
 
-    if (!coVal && !insVal) {
-      // 아무 필터도 없으면 소분류 셀렉트 숨김
+    if (!coVal) {
       sel.style.display = 'none';
       sel.value = '';
       return;
@@ -1333,22 +1392,19 @@ const flowView = {
 
     sel.style.display = '';
     const prev = curVal && minors.includes(curVal) ? curVal : '';
-    sel.innerHTML = '<option value="">전체 소분류</option>' +
+    sel.innerHTML = '<option value="">전체 상세</option>' +
       minors.map(m => `<option value="${esc(m)}"${m===prev?' selected':''}>${esc(m)}</option>`).join('');
     if (!prev) sel.value = '';
   },
 
   render() {
-    const body       = document.getElementById('flow-body');
-    const coVal      = document.getElementById('flow-co-select').value;
-    const insVal     = document.getElementById('flow-ins-select').value;
-    const minorVal   = document.getElementById('flow-minor-select').value;
+    const body     = document.getElementById('flow-body');
+    const coVal    = document.getElementById('flow-co-select').value;
+    const minorVal = document.getElementById('flow-minor-select').value;
 
-    // 기업/보험유형/소분류 필터 적용
     let base = state.allScreens;
     if (coVal)    base = base.filter(s=>s.co===coVal);
-    if (insVal)   base = base.filter(s=>s.insLabel===insVal);
-    if (minorVal) base = base.filter(s=>(s.minorLabel||'')=== minorVal);
+    if (minorVal) base = base.filter(s=>(s.minorLabel||'')===minorVal);
 
     if (!base.length) {
       body.innerHTML = '<div class="flow-empty">조건에 맞는 화면이 없습니다.</div>';
@@ -2391,7 +2447,7 @@ const upload = {
           <div class="parse-field"><span class="parse-label">보험유형</span><div class="parse-val">${esc(p.insLabel||'-')}</div></div>
           <div class="parse-field"><span class="parse-label">대분류</span><div class="parse-val">${esc(p.majorLabel)}</div></div>
           <div class="parse-field"><span class="parse-label">중분류</span><div class="parse-val">${esc(p.midLabel||'-')}</div></div>
-          <div class="parse-field"><span class="parse-label">소분류 (텍스트)</span>
+          <div class="parse-field"><span class="parse-label">상세</span>
             <div class="parse-val${!p.minorLabel?' empty':''}">
               <input type="text" style="width:100%;border:none;background:transparent;font-size:12px;font-weight:600;font-family:inherit;outline:none"
                 placeholder="${p.minorLabel||'미지정'}" value="${esc(p.minorLabel||'')}"
@@ -2472,6 +2528,7 @@ const upload = {
 
         // 3) DB insert
         const p=item.parsed;
+        const today = new Date().toISOString().slice(0,10);
         const row = {
           co:p.co, screenid:p.screenId,
           majorcode:p.majorCode, majorlabel:p.majorLabel,
@@ -2479,6 +2536,7 @@ const upload = {
           minorcode:p.minorCode||'', minorlabel:p.minorLabel||'',
           inslabel:p.insLabel||'', inscode:p.insCode||'',
           imgsrc:imgSrc, category:p.majorLabel,
+          uploaded_at: today,
         };
         const {data:dbData, error:de} = await supa.from('screens').insert([row]).select().single();
         if (de) throw de;
@@ -2498,6 +2556,95 @@ const upload = {
     const ok  = this.files.filter(f=>f.status==='success').length;
     const fail= this.files.filter(f=>f.status==='fail').length;
     ui.showToast(`완료: ${ok}장 업로드${fail?` / 실패: ${fail}장`:''}`, 3500);
+  },
+};
+
+// ── 관리자 서브탭 ────────────────────────────────────────────
+const adminSubtab = {
+  _cur: 'screens',
+  show(tab) {
+    this._cur = tab;
+    document.getElementById('admin-panel-screens').style.display = tab === 'screens' ? '' : 'none';
+    document.getElementById('admin-panel-urls').style.display    = tab === 'urls'    ? '' : 'none';
+    document.getElementById('bulk-toolbar').style.display        = tab === 'screens' ? '' : 'none';
+    document.getElementById('admin-topbar-actions').style.display = tab === 'screens' ? 'flex' : 'none';
+    document.getElementById('subtab-screens').classList.toggle('active', tab === 'screens');
+    document.getElementById('subtab-urls').classList.toggle('active', tab === 'urls');
+    if (tab === 'urls') coUrlManager.renderTable();
+  },
+};
+
+// ── 기업 URL 관리 ────────────────────────────────────────────
+const coUrlManager = {
+  _KEY: 'co_url_map',
+
+  _data() {
+    try { return JSON.parse(localStorage.getItem(this._KEY) || '{}'); }
+    catch { return {}; }
+  },
+  _save(d) { localStorage.setItem(this._KEY, JSON.stringify(d)); },
+
+  get(co) { return this._data()[co] || null; },
+
+  set(co, label, url) {
+    const d = this._data();
+    d[co] = { label: label.trim(), url: url.trim() };
+    this._save(d);
+  },
+
+  del(co) {
+    const d = this._data();
+    delete d[co];
+    this._save(d);
+  },
+
+  // 관리자 탭 URL 테이블 렌더
+  load() { this.renderTable(); },
+
+  renderTable() {
+    const tbody = document.getElementById('co-url-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // 현재 등록된 기업 목록 (allScreens 기준)
+    const cos = [...new Set(state.allScreens.map(s=>s.co).filter(Boolean))]
+      .sort((a,b) => a.localeCompare(b, 'ko'));
+    const urlData = this._data();
+
+    if (!cos.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--label-assist);padding:20px">등록된 기업이 없습니다.</td></tr>';
+      return;
+    }
+
+    cos.forEach(co => {
+      const entry = urlData[co] || { label: '', url: '' };
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-size:12px;font-weight:700;color:var(--label-normal)">${esc(co)}</td>
+        <td><input class="co-url-input" id="url-lbl-${esc(co)}" value="${esc(entry.label)}" placeholder="예: 공식 사이트"></td>
+        <td><input class="co-url-input" id="url-val-${esc(co)}" value="${esc(entry.url)}" placeholder="https://..."></td>
+        <td style="display:flex;gap:6px">
+          <button class="co-url-save-btn" onclick="coUrlManager._onSave('${co.replace(/'/g,"\\'")}')">저장</button>
+          ${entry.url ? `<button class="co-url-del-btn" onclick="coUrlManager._onDel('${co.replace(/'/g,"\\'")}')">삭제</button>` : ''}
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  },
+
+  _onSave(co) {
+    const lbl = document.getElementById(`url-lbl-${co}`)?.value || '';
+    const url = document.getElementById(`url-val-${co}`)?.value || '';
+    if (!url) { ui.showToast('URL을 입력해주세요.'); return; }
+    this.set(co, lbl, url);
+    this.renderTable();
+    ui.showToast(`${co} URL이 저장됐습니다.`);
+  },
+
+  _onDel(co) {
+    if (!confirm(`${co}의 URL을 삭제하시겠습니까?`)) return;
+    this.del(co);
+    this.renderTable();
+    ui.showToast('URL이 삭제됐습니다.');
   },
 };
 
@@ -2753,10 +2900,15 @@ async function init() {
     partOrder:  s.partorder   || s.partOrder   || 0,
     flowGroup:  s.flowgroup   || s.flowGroup   || '',
     flowOrder:  s.floworder   || s.flowOrder   || 0,
+    uploadedAt: s.uploaded_at || s.uploadedAt  || s.created_at || '',
   }));
   state.filtered = [...state.allScreens];
   render.sidebar(); render.gallery(); flowView.init();
   ui._initResponsive();
+  coUrlManager.load();
+  // [2] 새로고침 시 탭 위치 복원
+  const savedTab = sessionStorage.getItem('activeTab');
+  if (savedTab && savedTab !== 'gallery') render.page(savedTab);
 }
 init();
 </script>
