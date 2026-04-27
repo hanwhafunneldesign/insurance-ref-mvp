@@ -165,6 +165,28 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .btn-sm{height:36px;padding:0 14px;font-size:12px}
 
 .admin-subtab-ctrl{display:flex;gap:2px;background:var(--bg-deep);border-radius:var(--r-md);padding:3px}
+
+/* ── 관리자 보기 형식 토글 ── */
+.view-toggle-btn{width:32px;height:32px;border:none;border-radius:var(--r-md);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--label-assist);transition:all .15s;flex-shrink:0}
+.view-toggle-btn.active{background:var(--surface);color:var(--label-normal);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.view-toggle-btn svg{width:16px;height:16px;display:block}
+
+/* ── 열형식 리스트 ── */
+.admin-list{display:flex;flex-direction:column;gap:2px}
+.admin-list-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--r-md);background:var(--surface);border:2px solid transparent;cursor:pointer;transition:border-color .15s,background .15s}
+.admin-list-row:hover{border-color:var(--line);background:var(--bg-deep)}
+.admin-list-row.selected{border-color:var(--primary);background:var(--primary-alt)}
+.admin-list-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.admin-list-check.checked{background:var(--primary);border-color:var(--primary)}
+.admin-list-check.checked::after{content:'✓';font-size:11px;font-weight:800;color:#fff}
+.admin-list-thumb{width:32px;height:54px;border-radius:4px;overflow:hidden;background:var(--bg-deep);flex-shrink:0}
+.admin-list-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.admin-list-co{font-size:12px;font-weight:700;color:var(--label-normal);width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-list-major{font-size:11px;color:var(--label-alt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-list-minor{font-size:11px;color:var(--label-assist);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-list-date{font-size:10px;color:var(--label-assist);width:80px;flex-shrink:0;text-align:right}
+.admin-list-part-badge{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;background:var(--bg-deep);color:var(--label-assist);flex-shrink:0}
+.admin-list-header{display:flex;align-items:center;gap:12px;padding:6px 12px;font-size:10px;font-weight:700;color:var(--label-assist);letter-spacing:.5px;border-bottom:1px solid var(--line-alt);margin-bottom:4px}
 .admin-subtab{height:30px;padding:0 16px;border:none;background:transparent;border-radius:6px;font-size:13px;font-weight:500;color:var(--label-assist);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
 .admin-subtab.active{background:var(--surface);color:var(--label-normal);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .co-url-section{background:var(--surface);border-radius:var(--r-lg);padding:20px;margin-bottom:20px;border:1px solid var(--line-alt)}
@@ -501,15 +523,15 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 <nav class="nav">
   <div class="logo">REF</div>
   <div class="seg-ctrl">
-    <button class="seg-btn" id="nav-gallery" onclick="render.page('gallery')">기능별</button>
-    <button class="seg-btn active" id="nav-flow" onclick="render.page('flow')">Flow 뷰</button>
+    <button class="seg-btn active" id="nav-gallery" onclick="render.page('gallery')">기능별</button>
+    <button class="seg-btn" id="nav-flow" onclick="render.page('flow')">Flow 뷰</button>
     <button class="seg-btn" id="nav-admin" onclick="render.page('admin')">관리자</button>
   </div>
   <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
 </nav>
 
 <!-- GALLERY -->
-<div class="page" id="page-gallery" style="padding:0">
+<div class="page active" id="page-gallery" style="padding:0">
   <div class="gallery-topbar">
     <div style="display:flex;align-items:center;gap:8px">
       <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="ui.toggleSidebar()">☰ 분류</button>
@@ -538,7 +560,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 </div>
 
 <!-- FLOW VIEW -->
-<div class="page active" id="page-flow">
+<div class="page" id="page-flow">
   <div class="flow-topbar">
     <div class="flow-selector">
       <select class="flow-select" id="flow-co-select" onchange="flowView.onFilter()">
@@ -565,7 +587,16 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
       <button class="admin-subtab active" id="subtab-screens" onclick="adminSubtab.show('screens')">스크린 관리</button>
       <button class="admin-subtab" id="subtab-urls" onclick="adminSubtab.show('urls')">URL 관리</button>
     </div>
-    <div id="admin-topbar-actions" style="display:flex;gap:8px">
+    <div id="admin-topbar-actions" style="display:flex;align-items:center;gap:8px">
+      <!-- 보기 형식 토글 -->
+      <div style="display:flex;gap:2px;background:var(--bg-deep);border-radius:var(--r-md);padding:3px" id="view-toggle-wrap">
+        <button class="view-toggle-btn active" id="view-btn-gallery" onclick="adminView.set('gallery')" title="갤러리형">
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>
+        </button>
+        <button class="view-toggle-btn" id="view-btn-list" onclick="adminView.set('list')" title="열형식">
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="2" width="14" height="2" rx="1" fill="currentColor"/><rect x="1" y="7" width="14" height="2" rx="1" fill="currentColor"/><rect x="1" y="12" width="14" height="2" rx="1" fill="currentColor"/></svg>
+        </button>
+      </div>
       <button class="btn-ghost" id="bulk-select-all-btn" onclick="admin.toggleSelectAll()" style="display:none">전체선택</button>
       <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
     </div>
@@ -605,7 +636,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
     <!-- 서브탭: 스크린 관리 -->
     <div id="admin-panel-screens">
       <div class="admin-gallery" id="admin-gallery-wrap"></div>
-      <div style="display:none" id="admin-table-wrap"></div>
+      <div id="admin-list-wrap" style="display:none;padding:0 4px"></div>
     </div>
     <!-- 서브탭: URL 관리 -->
     <div id="admin-panel-urls" style="display:none">
@@ -972,6 +1003,23 @@ const ui = {
   },
 };
 
+// ── 관리자 보기 형식 ─────────────────────────────────────────
+const adminView = {
+  _KEY: 'admin_view_mode',
+  get mode() { return localStorage.getItem(this._KEY) || 'gallery'; },
+  set(mode) {
+    localStorage.setItem(this._KEY, mode);
+    document.getElementById('view-btn-gallery').classList.toggle('active', mode==='gallery');
+    document.getElementById('view-btn-list').classList.toggle('active', mode==='list');
+    render.adminTable();
+  },
+  init() {
+    const m = this.mode;
+    document.getElementById('view-btn-gallery')?.classList.toggle('active', m==='gallery');
+    document.getElementById('view-btn-list')?.classList.toggle('active', m==='list');
+  },
+};
+
 // ── 렌더링 ───────────────────────────────────────────────────
 const render = {
   page(n) {
@@ -1138,87 +1186,172 @@ const render = {
   },
 
   adminTable() {
-    // 갤러리 뷰로 렌더
-    const wrap = document.getElementById('admin-gallery-wrap');
-    if (!wrap) return;
+    const galleryWrap = document.getElementById('admin-gallery-wrap');
+    const listWrap    = document.getElementById('admin-list-wrap');
+    if (!galleryWrap) return;
+
+    const mode = adminView.mode;
+    galleryWrap.style.display = mode === 'gallery' ? '' : 'none';
+    listWrap.style.display    = mode === 'list'    ? '' : 'none';
+
     if (!state.allScreens.length) {
-      wrap.innerHTML = '<div class="empty-admin" style="grid-column:1/-1">등록된 데이터가 없습니다.</div>';
+      const msg = '<div class="empty-admin" style="grid-column:1/-1;padding:40px;text-align:center;color:var(--label-assist)">등록된 데이터가 없습니다.</div>';
+      galleryWrap.innerHTML = msg;
+      listWrap.innerHTML = msg;
       document.getElementById('bulk-select-all-btn').style.display='none';
       return;
     }
     document.getElementById('bulk-select-all-btn').style.display='';
     admin._renderBulkMajorOptions();
 
-    wrap.innerHTML = '';
-    // [7] 최신순 정렬 (id 내림차순)
     const sorted = [...state.allScreens].sort((a,b) => (b.id||0) - (a.id||0));
-    sorted.forEach(s => {
-      const card = document.createElement('div');
-      card.className = `admin-card${admin._selected.has(s.id)?' selected':''}`;
-      card.id = `admin-card-${s.id}`;
 
-      // 체크박스 (좌상단 시각 인디케이터)
-      const chk = document.createElement('div');
-      chk.className = `admin-card-check${admin._selected.has(s.id)?' checked':''}`;
-      chk.title = '선택';
+    if (mode === 'gallery') {
+      galleryWrap.innerHTML = '';
+      sorted.forEach(s => {
+        const card = document.createElement('div');
+        card.className = `admin-card${admin._selected.has(s.id)?' selected':''}`;
+        card.id = `admin-card-${s.id}`;
 
-      function toggleCheck(e) {
-        e.stopPropagation();
-        const checked = !admin._selected.has(s.id);
-        admin.onRowCheck(s.id, checked);
-        card.classList.toggle('selected', checked);
-        chk.classList.toggle('checked', checked);
-        const chkAll = document.getElementById('chk-all');
-        if(chkAll) chkAll.checked = admin._selected.size === state.allScreens.length;
-      }
-      chk.addEventListener('click', toggleCheck);
+        const chk = document.createElement('div');
+        chk.className = `admin-card-check${admin._selected.has(s.id)?' checked':''}`;
+        chk.title = '선택';
 
-      // 썸네일 — 클릭 전체 영역이 체크 토글
-      const thumb = document.createElement('div');
-      thumb.className = 'admin-card-thumb';
-      thumb.style.cursor = 'pointer';
-      const img = document.createElement('img');
-      img.src = s.imgSrc||''; img.alt = s.co||''; img.loading='lazy';
-      img.onerror=()=>{ thumb.style.background='var(--bg-deep)'; };
-      thumb.appendChild(img);
-      thumb.addEventListener('click', toggleCheck);
+        function toggleCheck(e) {
+          e.stopPropagation();
+          const checked = !admin._selected.has(s.id);
+          admin.onRowCheck(s.id, checked);
+          card.classList.toggle('selected', checked);
+          chk.classList.toggle('checked', checked);
+          const chkAll = document.getElementById('chk-all');
+          if(chkAll) chkAll.checked = admin._selected.size === state.allScreens.length;
+        }
+        chk.addEventListener('click', toggleCheck);
 
-      // 파트 배지
-      if (s.partGroup) {
-        const siblings = state.allScreens.filter(x=>x.partGroup===s.partGroup).sort((a,b)=>a.partOrder-b.partOrder);
-        const pb = document.createElement('div'); pb.className='admin-card-part-badge';
-        const idx2 = siblings.findIndex(x=>x.id===s.id)+1;
-        pb.textContent=`${idx2}/${siblings.length}`;
-        card.appendChild(pb);
-      }
+        const thumb = document.createElement('div');
+        thumb.className = 'admin-card-thumb';
+        thumb.style.cursor = 'pointer';
+        const img = document.createElement('img');
+        img.src = s.imgSrc||''; img.alt = s.co||''; img.loading='lazy';
+        img.onerror=()=>{ thumb.style.background='var(--bg-deep)'; };
+        thumb.appendChild(img);
+        thumb.addEventListener('click', toggleCheck);
 
-      // 하단 정보 — 클릭 시 라이트박스(상세화면)
-      const info = document.createElement('div');
-      info.className = 'admin-card-info';
-      info.style.cursor = 'pointer';
-      info.title = '상세 보기';
-      const uploadedStr = (s.uploadedAt || s.uploaded_at || s.created_at || '').slice(0,10).replace(/-/g,'.');
-      info.innerHTML = `
-        <div class="admin-card-co">${esc(s.co||'-')}</div>
-        <div class="admin-card-id">${esc(s.screenId||'-')}</div>
-        ${uploadedStr ? `<div class="admin-card-date">${esc(uploadedStr)}</div>` : ''}`;
-      info.addEventListener('click', e => {
-        e.stopPropagation();
-        const idx = state.allScreens.findIndex(x => x.id === s.id);
-        if (idx === -1) return;
-        state.filtered = [...state.allScreens];
-        state.curIdx = idx;
-        lightbox.open(idx);
+        if (s.partGroup) {
+          const siblings = state.allScreens.filter(x=>x.partGroup===s.partGroup).sort((a,b)=>a.partOrder-b.partOrder);
+          const pb = document.createElement('div'); pb.className='admin-card-part-badge';
+          const idx2 = siblings.findIndex(x=>x.id===s.id)+1;
+          pb.textContent=`${idx2}/${siblings.length}`;
+          card.appendChild(pb);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'admin-card-info';
+        info.style.cursor = 'pointer';
+        info.title = '상세 보기';
+        const uploadedStr = (s.uploadedAt || s.uploaded_at || s.created_at || '').slice(0,10).replace(/-/g,'.');
+        info.innerHTML = `
+          <div class="admin-card-co">${esc(s.co||'-')}</div>
+          <div class="admin-card-id">${esc(s.screenId||'-')}</div>
+          ${uploadedStr ? `<div class="admin-card-date">${esc(uploadedStr)}</div>` : ''}`;
+        info.addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = state.allScreens.findIndex(x => x.id === s.id);
+          if (idx === -1) return;
+          state.filtered = [...state.allScreens];
+          state.curIdx = idx;
+          lightbox.open(idx);
+        });
+
+        card.addEventListener('click', () => adminEdit.open(s.id));
+        card.appendChild(chk);
+        card.appendChild(thumb);
+        card.appendChild(info);
+        galleryWrap.appendChild(card);
       });
 
-      // 카드 자체 클릭(썸네일·정보 외 여백) → 편집 모달
-      card.addEventListener('click', () => adminEdit.open(s.id));
+    } else {
+      // ── 열형식 ──
+      listWrap.innerHTML = '';
+      const header = document.createElement('div');
+      header.className = 'admin-list-header';
+      header.innerHTML = `
+        <div style="width:18px;flex-shrink:0"></div>
+        <div style="width:32px;flex-shrink:0"></div>
+        <div style="width:120px;flex-shrink:0">기업명</div>
+        <div style="flex:1">대분류 / 중분류</div>
+        <div style="width:100px;flex-shrink:0">상세</div>
+        <div style="width:80px;flex-shrink:0;text-align:right">업로드일</div>`;
+      listWrap.appendChild(header);
 
-      card.appendChild(chk);
-      card.appendChild(thumb);
-      card.appendChild(info);
-      wrap.appendChild(card);
-    });
+      const list = document.createElement('div');
+      list.className = 'admin-list';
+
+      sorted.forEach(s => {
+        const row = document.createElement('div');
+        row.className = `admin-list-row${admin._selected.has(s.id)?' selected':''}`;
+        row.id = `admin-list-row-${s.id}`;
+
+        const chk = document.createElement('div');
+        chk.className = `admin-list-check${admin._selected.has(s.id)?' checked':''}`;
+
+        function toggleCheck(e) {
+          e.stopPropagation();
+          const checked = !admin._selected.has(s.id);
+          admin.onRowCheck(s.id, checked);
+          row.classList.toggle('selected', checked);
+          chk.classList.toggle('checked', checked);
+          const chkAll = document.getElementById('chk-all');
+          if(chkAll) chkAll.checked = admin._selected.size === state.allScreens.length;
+        }
+        chk.addEventListener('click', toggleCheck);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'admin-list-thumb';
+        thumb.style.cursor = 'pointer';
+        const img = document.createElement('img');
+        img.src = s.imgSrc||''; img.alt = s.co||''; img.loading='lazy';
+        img.onerror=()=>{ thumb.style.background='var(--bg-deep)'; };
+        thumb.appendChild(img);
+        thumb.addEventListener('click', toggleCheck);
+
+        const uploadedStr = (s.uploadedAt || s.uploaded_at || s.created_at || '').slice(0,10).replace(/-/g,'.');
+        const majorMid = [s.majorLabel, s.midLabel].filter(Boolean).join(' / ');
+
+        const info = document.createElement('div');
+        info.style.cssText = 'display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer';
+        info.title = '상세 보기';
+        info.innerHTML = `
+          <div class="admin-list-co">${esc(s.co||'-')}</div>
+          <div class="admin-list-major">${esc(majorMid||'-')}</div>
+          <div class="admin-list-minor">${esc(s.minorLabel||'-')}</div>
+          <div class="admin-list-date">${esc(uploadedStr||'-')}</div>`;
+        info.addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = state.allScreens.findIndex(x => x.id === s.id);
+          if (idx === -1) return;
+          state.filtered = [...state.allScreens];
+          state.curIdx = idx;
+          lightbox.open(idx);
+        });
+
+        if (s.partGroup) {
+          const siblings = state.allScreens.filter(x=>x.partGroup===s.partGroup).sort((a,b)=>a.partOrder-b.partOrder);
+          const pb = document.createElement('div');
+          pb.className = 'admin-list-part-badge';
+          const idx2 = siblings.findIndex(x=>x.id===s.id)+1;
+          pb.textContent=`${idx2}/${siblings.length}`;
+          row.appendChild(pb);
+        }
+
+        row.addEventListener('click', () => adminEdit.open(s.id));
+        row.appendChild(chk);
+        row.appendChild(thumb);
+        row.appendChild(info);
+        list.appendChild(row);
+      });
+      listWrap.appendChild(list);
+    }
   },
 };
 
@@ -2908,9 +3041,11 @@ async function init() {
   render.sidebar(); render.gallery(); flowView.init();
   ui._initResponsive();
   coUrlManager.load();
+  adminView.init();
   // [2] 새로고침 시 탭 위치 복원
   const savedTab = sessionStorage.getItem('activeTab');
-  if (savedTab && savedTab !== 'gallery') render.page(savedTab);
+  if (savedTab) render.page(savedTab);
+  else render.page('gallery');
 }
 init();
 </script>
