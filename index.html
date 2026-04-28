@@ -2711,76 +2711,93 @@ const adminSubtab = {
 
 // ── 기업 URL 관리 ────────────────────────────────────────────
 const coUrlManager = {
-  _KEY: 'co_url_map',
+  _cache: {}, // { co: { label, url } }
 
-  _data() {
-    try { return JSON.parse(localStorage.getItem(this._KEY) || '{}'); }
-    catch { return {}; }
-  },
-  _save(d) { localStorage.setItem(this._KEY, JSON.stringify(d)); },
-
-  get(co) { return this._data()[co] || null; },
-
-  set(co, label, url) {
-    const d = this._data();
-    d[co] = { label: label.trim(), url: url.trim() };
-    this._save(d);
-  },
-
-  del(co) {
-    const d = this._data();
-    delete d[co];
-    this._save(d);
+  async load() {
+    try {
+      const { data, error } = await supa.from('co_urls').select('co,label,url');
+      if (error) throw error;
+      this._cache = {};
+      (data||[]).forEach(r => { this._cache[r.co] = { label: r.label||'', url: r.url||'' }; });
+    } catch(e) {
+      console.warn('co_urls load error, fallback to localStorage', e);
+      try { this._cache = JSON.parse(localStorage.getItem('co_url_map')||'{}'); } catch{ this._cache={}; }
+    }
+    this.renderTable();
   },
 
-  // 관리자 탭 URL 테이블 렌더
-  load() { this.renderTable(); },
+  get(co) { return this._cache[co] || null; },
+
+  async set(co, label, url) {
+    const { error } = await supa.from('co_urls').upsert({ co, label, url }, { onConflict: 'co' });
+    if (error) throw error;
+    this._cache[co] = { label, url };
+  },
+
+  async del(co) {
+    const { error } = await supa.from('co_urls').delete().eq('co', co);
+    if (error) throw error;
+    delete this._cache[co];
+  },
 
   renderTable() {
     const tbody = document.getElementById('co-url-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // 현재 등록된 기업 목록 (allScreens 기준)
     const cos = [...new Set(state.allScreens.map(s=>s.co).filter(Boolean))]
       .sort((a,b) => a.localeCompare(b, 'ko'));
-    const urlData = this._data();
 
     if (!cos.length) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--label-assist);padding:20px">등록된 기업이 없습니다.</td></tr>';
       return;
     }
 
-    cos.forEach(co => {
-      const entry = urlData[co] || { label: '', url: '' };
+    this._cosCache = cos;
+    cos.forEach((co, i) => {
+      const entry = this._cache[co] || { label: '', url: '' };
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="font-size:12px;font-weight:700;color:var(--label-normal)">${esc(co)}</td>
-        <td><input class="co-url-input" id="url-lbl-${esc(co)}" value="${esc(entry.label)}" placeholder="예: 공식 사이트"></td>
-        <td><input class="co-url-input" id="url-val-${esc(co)}" value="${esc(entry.url)}" placeholder="https://..."></td>
+        <td><input class="co-url-input" id="url-lbl-${i}" value="${esc(entry.label)}" placeholder="예: 공식 사이트"></td>
+        <td><input class="co-url-input" id="url-val-${i}" value="${esc(entry.url)}" placeholder="https://..."></td>
         <td style="display:flex;gap:6px">
-          <button class="co-url-save-btn" onclick="coUrlManager._onSave('${co.replace(/'/g,"\\'")}')">저장</button>
-          ${entry.url ? `<button class="co-url-del-btn" onclick="coUrlManager._onDel('${co.replace(/'/g,"\\'")}')">삭제</button>` : ''}
+          <button class="co-url-save-btn" onclick="coUrlManager._onSaveIdx(${i})">저장</button>
+          ${entry.url ? `<button class="co-url-del-btn" onclick="coUrlManager._onDelCo('${co.replace(/'/g,"\\'")}')">삭제</button>` : ''}
         </td>`;
       tbody.appendChild(tr);
     });
   },
 
-  _onSave(co) {
-    const lbl = document.getElementById(`url-lbl-${co}`)?.value || '';
-    const url = document.getElementById(`url-val-${co}`)?.value || '';
+  async _onSaveIdx(i) {
+    const co  = (this._cosCache||[])[i];
+    if (!co) return;
+    const lbl = document.getElementById(`url-lbl-${i}`)?.value || '';
+    const url = document.getElementById(`url-val-${i}`)?.value || '';
     if (!url) { ui.showToast('URL을 입력해주세요.'); return; }
-    this.set(co, lbl, url);
-    this.renderTable();
-    ui.showToast(`${co} URL이 저장됐습니다.`);
+    try {
+      await this.set(co, lbl, url);
+      this.renderTable();
+      ui.showToast(`${co} URL이 저장됐습니다.`);
+    } catch(e) {
+      ui.showToast('저장 실패: ' + e.message);
+    }
   },
 
-  _onDel(co) {
+  async _onDelCo(co) {
     if (!confirm(`${co}의 URL을 삭제하시겠습니까?`)) return;
-    this.del(co);
-    this.renderTable();
-    ui.showToast('URL이 삭제됐습니다.');
+    try {
+      await this.del(co);
+      this.renderTable();
+      ui.showToast('URL이 삭제됐습니다.');
+    } catch(e) {
+      ui.showToast('삭제 실패: ' + e.message);
+    }
   },
+
+  // 구버전 호환용 (사용 안 함)
+  _onSave() {},
+  _onDel() {},
 };
 
 // ── AI 할당량 관리 ───────────────────────────────────────────
@@ -3040,7 +3057,7 @@ async function init() {
   state.filtered = [...state.allScreens];
   render.sidebar(); render.gallery(); flowView.init();
   ui._initResponsive();
-  coUrlManager.load();
+  await coUrlManager.load();
   adminView.init();
   // [2] 새로고침 시 탭 위치 복원
   const savedTab = sessionStorage.getItem('activeTab');
