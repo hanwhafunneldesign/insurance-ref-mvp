@@ -2178,7 +2178,8 @@ const admin = {
         if (coVal)     { s.co = coVal; }
         if (majorCode) { s.majorCode = majorCode; s.majorLabel = MAJOR_MAP[majorCode]||majorCode; }
         if (midCode)   { s.midCode = midCode; s.midLabel = MID_MAP[midCode]||midCode; }
-        if (minorVal !== '') s.minorCode = minorVal;
+        if (rawMinor === '__CLEAR__') { s.minorCode = ''; s.minorLabel = ''; }
+        else if (rawMinor) { s.minorCode = rawMinor; s.minorLabel = rawMinor; }
         if (insVal)    { s.insLabel = insVal; s.insCode = INS_CODE_MAP[insVal]||''; }
       });
 
