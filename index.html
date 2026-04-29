@@ -2723,26 +2723,29 @@ const upload = {
       item.status='uploading'; item.progress=10;
       this._renderList();
       try {
-        // 1) Storage 업로드
-        const ext  = item.file.name.split('.').pop();
-        // 파일 경로는 영문/숫자만 사용 (한글 포함 시 Storage 오류)
+        // 1) Edge Function에서 서명된 업로드 URL 발급
+        const ext    = item.file.name.split('.').pop();
         const safeCo = item.parsed.insCode || 'co';
-        const path = `${Date.now()}_${safeCo}_${item.parsed.screenId}.${ext}`;
-        // Storage 업로드 (Supabase REST API 직접 호출)
-        const storageUrl = `https://japrpixgjqlbwfpaqisk.supabase.co/storage/v1/object/${CONFIG.BUCKET}/${path}`;
-        const uploadRes = await fetch(storageUrl, {
-          method: 'POST',
-          headers: { 'x-upsert': 'false' },
+        const filePath = `${Date.now()}_${safeCo}_${item.parsed.screenId}.${ext}`;
+        const { signed_url } = await api('/storage/upload-url', 'POST', {
+          file_path: filePath,
+          content_type: item.file.type || 'image/png',
+        });
+
+        // 2) 서명된 URL로 직접 업로드
+        const uploadRes = await fetch(signed_url, {
+          method: 'PUT',
+          headers: { 'Content-Type': item.file.type || 'image/png' },
           body: item.file,
         });
         if (!uploadRes.ok) {
           const errBody = await uploadRes.json().catch(()=>({}));
-          throw new Error(errBody.error || `Storage 오류 ${uploadRes.status}`);
+          throw new Error(errBody.error || `Storage 업로드 오류 ${uploadRes.status}`);
         }
         item.progress = 60; this._renderList();
 
-        // 2) Public URL 조합 (고정 패턴)
-        const imgSrc = `https://japrpixgjqlbwfpaqisk.supabase.co/storage/v1/object/public/${CONFIG.BUCKET}/${path}`;
+        // 3) Public URL 조합
+        const imgSrc = `https://japrpixgjqlbwfpaqisk.supabase.co/storage/v1/object/public/${CONFIG.BUCKET}/${filePath}`;
         item.progress = 80; this._renderList();
 
         // 3) DB insert
