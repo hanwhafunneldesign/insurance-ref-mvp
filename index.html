@@ -832,17 +832,24 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const CONFIG = {
-  SUPA_URL:  'https://japrpixgjqlbwfpaqisk.supabase.co',
-  SUPA_KEY:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphcHJwaXhnanFsYndmcGFxaXNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzE3MTAsImV4cCI6MjA5MjI0NzcxMH0.WjD-6zo_ghjWTQEIX1ZJeJ9zoXxOx8Xmyuwwe05wRd8',
+  API:       'https://japrpixgjqlbwfpaqisk.supabase.co/functions/v1/api',
   PROXY_URL: 'https://japrpixgjqlbwfpaqisk.supabase.co/functions/v1/gemini-proxy',
   BUCKET:    'screens',
 };
 
-let supa;
-try { supa = supabase.createClient(CONFIG.SUPA_URL, CONFIG.SUPA_KEY); } catch(e) { console.error(e); }
+// API 헬퍼 (Edge Function 경유 — 키 없음)
+async function api(path, method = 'GET', body = null) {
+  const res = await fetch(CONFIG.API + path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : null,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '서버 오류');
+  return data;
+}
 
 // ── ID 사전 ──────────────────────────────────────────────────
 const MAJOR_MAP = {
@@ -1390,8 +1397,7 @@ const lightbox = {
     btn.disabled = true; btn.textContent = '삭제 중...';
 
     try {
-      const { error } = await supa.from('screens').delete().eq('id', s.id);
-      if (error) throw error;
+      await api(`/screens/${s.id}`, 'DELETE');
 
       // 로컬 상태에서 제거
       state.allScreens = state.allScreens.filter(x => x.id !== s.id);
@@ -1765,10 +1771,7 @@ const flowView = {
 
       // 배치 업데이트: 순서 바뀐 것만
       for (const s of toSave) {
-        const {error} = await supa.from('screens')
-          .update({floworder:s.flowOrder, flowgroup:s.flowGroup})
-          .eq('id',s.id);
-        if(error) throw error;
+        await api(`/screens/${s.id}`, 'PATCH', {floworder:s.flowOrder, flowgroup:s.flowGroup});
       }
       this._dirty = false;
       btn.style.display = 'none';
@@ -1858,8 +1861,7 @@ const adminEdit = {
     btn.disabled=true; btn.textContent='저장 중...';
 
     try {
-      const {error} = await supa.from('screens').update(updates).eq('id', this._id);
-      if(error) throw error;
+      await api(`/screens/${this._id}`, 'PATCH', updates);
 
       // 로컬 반영
       if(updates.co)         s.co          = updates.co;
@@ -1890,8 +1892,7 @@ const adminEdit = {
     if (!confirm(`"${s?.co} - ${s?.screenId}" 화면을 삭제하시겠습니까?`)) return;
 
     try {
-      const {error} = await supa.from('screens').delete().eq('id', this._id);
-      if(error) throw error;
+      await api(`/screens/${this._id}`, 'DELETE');
       state.allScreens = state.allScreens.filter(x=>x.id!==this._id);
       state.filtered   = state.filtered.filter(x=>x.id!==this._id);
       admin._selected.delete(this._id);
@@ -2030,8 +2031,7 @@ const lbEdit = {
     if (!Object.keys(updates).length) { this.cancel(); return; }
 
     try {
-      const {error} = await supa.from('screens').update(updates).eq('id', s.id);
-      if(error) throw error;
+      await api(`/screens/${s.id}`, 'PATCH', updates);
 
       // 로컬 상태 반영
       if(updates.co)         { s.co = updates.co; }
@@ -2168,8 +2168,7 @@ const admin = {
     btn.textContent = '저장 중...'; btn.disabled = true;
 
     try {
-      const { error } = await supa.from('screens').update(updates).in('id', ids);
-      if (error) throw error;
+      await api('/screens/bulk-update', 'POST', { ids, updates });
 
       // 로컬 상태 업데이트
       ids.forEach(id => {
@@ -2347,16 +2346,14 @@ const admin = {
   // ── DB 업데이트 헬퍼 ─────────────────────────────────────────
   async _updateField(id, field, value) {
     try {
-      const {error}=await supa.from('screens').update({[field]:value}).eq('id',id);
-      if(error) throw error;
+      await api(`/screens/${id}`, 'PATCH', {[field]:value});
       ui.showToast('저장됐습니다.');
     } catch(e) { ui.showToast('저장 실패: '+e.message, 4000); }
   },
 
   async _updateMulti(id, fields) {
     try {
-      const {error}=await supa.from('screens').update(fields).eq('id',id);
-      if(error) throw error;
+      await api(`/screens/${id}`, 'PATCH', fields);
       ui.showToast('저장됐습니다.');
     } catch(e) { ui.showToast('저장 실패: '+e.message, 4000); }
   },
@@ -2372,8 +2369,7 @@ const admin = {
     const updates = ids.map((id, i) => ({ id, partgroup: groupKey, partorder: i+1 }));
     try {
       for (const u of updates) {
-        const {error} = await supa.from('screens').update({partgroup:u.partgroup, partorder:u.partorder}).eq('id',u.id);
-        if(error) throw error;
+        await api(`/screens/${u.id}`, 'PATCH', {partgroup:u.partgroup, partorder:u.partorder});
         const s = state.allScreens.find(x=>x.id===u.id);
         if(s) { s.partGroup=u.partgroup; s.partOrder=u.partorder; }
       }
@@ -2387,8 +2383,7 @@ const admin = {
     const ids = [...this._selected];
     try {
       for (const id of ids) {
-        const {error} = await supa.from('screens').update({partgroup:'', partorder:0}).eq('id',id);
-        if(error) throw error;
+        await api(`/screens/${id}`, 'PATCH', {partgroup:'', partorder:0});
         const s = state.allScreens.find(x=>x.id===id);
         if(s) { s.partGroup=''; s.partOrder=0; }
       }
@@ -2408,8 +2403,7 @@ const admin = {
     btn.disabled = true; btn.textContent = '삭제 중...';
 
     try {
-      const { error } = await supa.from('screens').delete().in('id', ids);
-      if (error) throw error;
+      await api('/screens/bulk-delete', 'POST', { ids });
 
       // 로컬 상태에서도 제거
       state.allScreens = state.allScreens.filter(s => !ids.includes(s.id));
@@ -2428,8 +2422,7 @@ const admin = {
   async deleteScreen(id) {
     if(!confirm('정말 삭제하시겠습니까?')) return;
     try {
-      const {error}=await supa.from('screens').delete().eq('id',id);
-      if(error) throw error;
+      await api(`/screens/${id}`, 'DELETE');
       state.allScreens=state.allScreens.filter(s=>s.id!==id);
       state.filtered  =state.filtered.filter(s=>s.id!==id);
       this._selected.delete(id);
@@ -2653,13 +2646,21 @@ const upload = {
         // 파일 경로는 영문/숫자만 사용 (한글 포함 시 Storage 오류)
         const safeCo = item.parsed.insCode || 'co';
         const path = `${Date.now()}_${safeCo}_${item.parsed.screenId}.${ext}`;
-        const {error:se} = await supa.storage.from(CONFIG.BUCKET).upload(path, item.file, {cacheControl:'3600',upsert:false});
-        if (se) throw se;
+        // Storage 업로드 (Supabase REST API 직접 호출)
+        const storageUrl = `https://japrpixgjqlbwfpaqisk.supabase.co/storage/v1/object/${CONFIG.BUCKET}/${path}`;
+        const uploadRes = await fetch(storageUrl, {
+          method: 'POST',
+          headers: { 'x-upsert': 'false' },
+          body: item.file,
+        });
+        if (!uploadRes.ok) {
+          const errBody = await uploadRes.json().catch(()=>({}));
+          throw new Error(errBody.error || `Storage 오류 ${uploadRes.status}`);
+        }
         item.progress = 60; this._renderList();
 
-        // 2) Public URL
-        const {data:ud} = supa.storage.from(CONFIG.BUCKET).getPublicUrl(path);
-        const imgSrc = ud.publicUrl;
+        // 2) Public URL 조합 (고정 패턴)
+        const imgSrc = `https://japrpixgjqlbwfpaqisk.supabase.co/storage/v1/object/public/${CONFIG.BUCKET}/${path}`;
         item.progress = 80; this._renderList();
 
         // 3) DB insert
@@ -2674,8 +2675,7 @@ const upload = {
           imgsrc:imgSrc, category:p.majorLabel,
           uploaded_at: today,
         };
-        const {data:dbData, error:de} = await supa.from('screens').insert([row]).select().single();
-        if (de) throw de;
+        const dbData = await api('/screens', 'POST', row);
 
         item.status='success'; item.progress=100;
         state.allScreens.push(dbData);
@@ -2716,8 +2716,7 @@ const coUrlManager = {
 
   async load() {
     try {
-      const { data, error } = await supa.from('co_urls').select('co,label,url');
-      if (error) throw error;
+      const data = await api('/co_urls');
       this._cache = {};
       (data||[]).forEach(r => { this._cache[r.co] = { label: r.label||'', url: r.url||'' }; });
     } catch(e) {
@@ -2730,14 +2729,12 @@ const coUrlManager = {
   get(co) { return this._cache[co] || null; },
 
   async set(co, label, url) {
-    const { error } = await supa.from('co_urls').upsert({ co, label, url }, { onConflict: 'co' });
-    if (error) throw error;
+    await api('/co_urls', 'POST', { co, label, url });
     this._cache[co] = { label, url };
   },
 
   async del(co) {
-    const { error } = await supa.from('co_urls').delete().eq('co', co);
-    if (error) throw error;
+    await api('/co_urls', 'DELETE', { co });
     delete this._cache[co];
   },
 
@@ -2939,7 +2936,7 @@ const ai = {
 }`;
       const res=await fetch(CONFIG.PROXY_URL,{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${CONFIG.SUPA_KEY}`},
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
           generationConfig:{temperature:0.1,maxOutputTokens:512}
@@ -3020,7 +3017,7 @@ async function init() {
   let screens=[];
   try {
     if(supa){
-      const {data,error}=await supa.from('screens').select('*').order('id');
+      const data = await api('/screens'); const error = null;
       if(error) throw error;
       screens=data||[];
     }
