@@ -3231,14 +3231,11 @@ const auth = {
 async function init() {
   let screens=[];
   try {
-    if(supa){
-      const data = await api('/screens'); const error = null;
-      if(error) throw error;
-      screens=data||[];
-    }
+    const data = await api('/screens');
+    screens = data || [];
   } catch(err) {
     console.warn('[REF] DB 로드 실패:', err.message);
-    ui.showToast('DB 연결 실패. 샘플 데이터로 표시합니다.', 4000);
+    ui.showToast('DB 연결 실패. 잠시 후 다시 시도해주세요.', 4000);
   }
   if(!screens.length){
     screens=[
