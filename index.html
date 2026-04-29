@@ -516,11 +516,81 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
   top:56px
 }
 .sidebar-overlay.visible{display:block}
+
+/* ── 로그인 화면 ─────────────────────────────────────────── */
+.auth-screen{display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);align-items:center;justify-content:center;flex-direction:column}
+.auth-screen.active{display:flex}
+.auth-card{background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--line-alt);padding:40px 36px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
+.auth-logo{font-size:28px;font-weight:800;letter-spacing:-1.5px;color:var(--primary);text-align:center;margin-bottom:6px}
+.auth-subtitle{font-size:13px;color:var(--label-assist);text-align:center;margin-bottom:32px}
+.auth-field{margin-bottom:16px}
+.auth-label{font-size:12px;font-weight:700;color:var(--label-alt);margin-bottom:6px;display:block}
+.auth-input{width:100%;height:44px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-md);font-size:14px;font-family:inherit;background:var(--bg);color:var(--label-normal);transition:border-color .15s}
+.auth-input:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.auth-input.error{border-color:var(--error);background:var(--error-bg)}
+.auth-btn{width:100%;height:48px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.auth-btn:hover{background:var(--primary-dark)}
+.auth-btn:disabled{opacity:.6;cursor:not-allowed}
+.auth-error{font-size:12px;color:var(--error);margin-top:12px;text-align:center;min-height:18px;font-weight:600}
+.auth-keep{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:12px;color:var(--label-alt);cursor:pointer}
+.auth-keep input{accent-color:var(--primary);width:16px;height:16px;cursor:pointer}
+
+/* ── 비번 변경 화면 ─────────────────────────────────────── */
+.change-pw-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:var(--r-full);background:var(--primary-alt);color:var(--primary);text-align:center;margin-bottom:16px;display:inline-block;width:100%}
+
+/* ── 상단 로그인 유저 표시 ──────────────────────────────── */
+.nav-user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--label-alt)}
+.nav-user-name{font-weight:700;color:var(--label-normal)}
+.nav-logout-btn{height:28px;padding:0 10px;background:transparent;border:1px solid var(--line);border-radius:var(--r-md);font-size:11px;font-weight:600;cursor:pointer;color:var(--label-alt);font-family:inherit;transition:all .15s}
+.nav-logout-btn:hover{background:var(--bg-deep);color:var(--error);border-color:var(--error)}
 </style>
 </head>
 <body>
 
-<nav class="nav">
+<!-- ── 로그인 화면 ── -->
+<div class="auth-screen active" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">REF</div>
+    <div class="auth-subtitle">보험 서비스 UX 레퍼런스 · 내부 전용</div>
+    <div class="auth-field">
+      <label class="auth-label" for="login-id">사번</label>
+      <input class="auth-input" id="login-id" type="text" placeholder="사번을 입력하세요" autocomplete="username">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" for="login-pw">비밀번호</label>
+      <input class="auth-input" id="login-pw" type="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
+    </div>
+    <label class="auth-keep">
+      <input type="checkbox" id="login-keep"> 로그인 유지 (24시간)
+    </label>
+    <button class="auth-btn" id="login-btn" onclick="auth.login()">로그인</button>
+    <div class="auth-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ── 최초 로그인 비번 변경 화면 ── -->
+<div class="auth-screen" id="change-pw-screen">
+  <div class="auth-card">
+    <div class="auth-logo">REF</div>
+    <div class="change-pw-badge">🔐 최초 로그인 — 비밀번호를 변경해주세요</div>
+    <div class="auth-field">
+      <label class="auth-label">현재 비밀번호 (초기 비밀번호)</label>
+      <input class="auth-input" id="cp-current" type="password" placeholder="초기 비밀번호 입력">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">새 비밀번호 (8자 이상)</label>
+      <input class="auth-input" id="cp-new" type="password" placeholder="새 비밀번호 입력">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">새 비밀번호 확인</label>
+      <input class="auth-input" id="cp-confirm" type="password" placeholder="새 비밀번호 재입력">
+    </div>
+    <button class="auth-btn" id="cp-btn" onclick="auth.changePassword()">비밀번호 변경 후 입장</button>
+    <div class="auth-error" id="cp-error"></div>
+  </div>
+</div>
+
+<nav class="nav" id="main-nav" style="display:none">
   <div class="logo">REF</div>
   <div class="seg-ctrl">
     <button class="seg-btn active" id="nav-gallery" onclick="render.page('gallery')">기능별</button>
@@ -528,6 +598,10 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
     <button class="seg-btn" id="nav-admin" onclick="render.page('admin')">관리자</button>
   </div>
   <button class="btn-primary" onclick="upload.openModal()">+ 업로드</button>
+  <div class="nav-user">
+    <span class="nav-user-name" id="nav-user-name"></span>
+    <button class="nav-logout-btn" onclick="auth.logout()">로그아웃</button>
+  </div>
 </nav>
 
 <!-- GALLERY -->
@@ -839,13 +913,21 @@ const CONFIG = {
   BUCKET:    'screens',
 };
 
-// API 헬퍼 (Edge Function 경유 — 키 없음)
+// API 헬퍼 (Edge Function 경유 — 토큰 자동 첨부)
 async function api(path, method = 'GET', body = null) {
+  const token = auth.getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(CONFIG.API + path, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body ? JSON.stringify(body) : null,
   });
+  if (res.status === 401) {
+    auth.clearToken();
+    auth.showLogin();
+    throw new Error('인증이 만료됐습니다. 다시 로그인해주세요.');
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || '서버 오류');
   return data;
@@ -3012,6 +3094,139 @@ const ai = {
   },
 };
 
+// ── 인증 모듈 ────────────────────────────────────────────────
+const auth = {
+  _user: null,
+  _tempEmployeeId: null,
+
+  getToken() {
+    return localStorage.getItem('ref_token') || sessionStorage.getItem('ref_token');
+  },
+  saveToken(token, keep = false) {
+    if (keep) localStorage.setItem('ref_token', token);
+    else sessionStorage.setItem('ref_token', token);
+  },
+  clearToken() {
+    localStorage.removeItem('ref_token');
+    sessionStorage.removeItem('ref_token');
+  },
+  isTokenExpired(token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp < Date.now() / 1000;
+    } catch { return true; }
+  },
+
+  async check() {
+    const token = this.getToken();
+    if (!token || this.isTokenExpired(token)) { this.showLogin(); return false; }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this._user = { id: payload.sub };
+      this.showApp();
+      return true;
+    } catch { this.showLogin(); return false; }
+  },
+
+  async login() {
+    const employeeId = document.getElementById('login-id').value.trim();
+    const password   = document.getElementById('login-pw').value;
+    const keep       = document.getElementById('login-keep').checked;
+    const errEl      = document.getElementById('login-error');
+    const btn        = document.getElementById('login-btn');
+    errEl.textContent = '';
+    if (!employeeId || !password) { errEl.textContent = '사번과 비밀번호를 입력해주세요.'; return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span>로그인 중...';
+    try {
+      const res = await fetch(CONFIG.API + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: employeeId, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || '로그인 실패'; return; }
+      this.saveToken(data.token, keep);
+      this._user = data.user;
+      if (data.is_first_login) {
+        this._tempEmployeeId = employeeId;
+        document.getElementById('auth-screen').classList.remove('active');
+        document.getElementById('change-pw-screen').classList.add('active');
+        document.getElementById('cp-current').focus();
+        return;
+      }
+      this.showApp();
+      await init();
+    } catch(e) {
+      errEl.textContent = '서버 연결 실패. 잠시 후 다시 시도해주세요.';
+    } finally {
+      btn.disabled = false; btn.textContent = '로그인';
+    }
+  },
+
+  async changePassword() {
+    const current = document.getElementById('cp-current').value;
+    const newPw   = document.getElementById('cp-new').value;
+    const confirm = document.getElementById('cp-confirm').value;
+    const errEl   = document.getElementById('cp-error');
+    const btn     = document.getElementById('cp-btn');
+    errEl.textContent = '';
+    if (!current || !newPw || !confirm) { errEl.textContent = '모든 항목을 입력해주세요.'; return; }
+    if (newPw.length < 8) { errEl.textContent = '새 비밀번호는 8자 이상이어야 합니다.'; return; }
+    if (newPw !== confirm) { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; return; }
+    if (current === newPw) { errEl.textContent = '초기 비밀번호와 다른 비밀번호를 사용해주세요.'; return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span>변경 중...';
+    try {
+      const res = await fetch(CONFIG.API + '/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: this._tempEmployeeId, current_password: current, new_password: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error || '변경 실패'; return; }
+      const keep = document.getElementById('login-keep')?.checked || false;
+      this.saveToken(data.token, keep);
+      document.getElementById('change-pw-screen').classList.remove('active');
+      this.showApp();
+      await init();
+    } catch(e) {
+      errEl.textContent = '서버 연결 실패.';
+    } finally {
+      btn.disabled = false; btn.textContent = '비밀번호 변경 후 입장';
+    }
+  },
+
+  logout() {
+    if (!confirm('로그아웃 하시겠습니까?')) return;
+    this.clearToken(); this._user = null;
+    document.getElementById('main-nav').style.display = 'none';
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('login-id').value = '';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-error').textContent = '';
+    this.showLogin();
+  },
+
+  showLogin() {
+    document.getElementById('auth-screen').classList.add('active');
+    document.getElementById('change-pw-screen').classList.remove('active');
+    document.getElementById('main-nav').style.display = 'none';
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    setTimeout(() => document.getElementById('login-id')?.focus(), 100);
+  },
+
+  showApp() {
+    document.getElementById('auth-screen').classList.remove('active');
+    document.getElementById('change-pw-screen').classList.remove('active');
+    document.getElementById('main-nav').style.display = '';
+    if (this._user?.name) {
+      document.getElementById('nav-user-name').textContent =
+        `${this._user.name} (${this._user.employee_id})`;
+    }
+  },
+};
+
 // ── 초기화 ──────────────────────────────────────────────────
 async function init() {
   let screens=[];
@@ -3062,7 +3277,25 @@ async function init() {
   if (savedTab) render.page(savedTab);
   else render.page('gallery');
 }
-init();
+
+// 엔터키로 로그인
+document.addEventListener('DOMContentLoaded', () => {
+  ['login-id','login-pw'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') auth.login();
+    });
+  });
+  ['cp-current','cp-new','cp-confirm'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') auth.changePassword();
+    });
+  });
+});
+
+// 앱 시작 — 토큰 있으면 바로 진입, 없으면 로그인 화면
+auth.check().then(authenticated => {
+  if (authenticated) init();
+});
 </script>
 </body>
 </html>
